@@ -24,7 +24,7 @@ const highlightRouting = asyncErrorHandler(async (req, res, next) => {
         });
 
         await consumer.connect();
-        await consumer.subscribe({ topics: ["highlight_result"] });
+        await consumer.subscribe({ topics: ["test"] });
 
         producer = new Kafka().producer({
             'bootstrap.servers': process.env.KAFKA_BROKERS_EXTERNAL,
@@ -35,16 +35,20 @@ const highlightRouting = asyncErrorHandler(async (req, res, next) => {
 
         const deliveryReports = await producer.send({
             topic: 'highlight',
-            messages: [ 
-                { value: Buffer.from(JSON.stringify(kafka_message), 'utf-8'), partition: partition, key: partition },]
+            messages: [
+                { value: Buffer.from(JSON.stringify(kafka_message), 'utf-8'), partition: 2, key: partition },]
         });
 
         await producer.disconnect();
+        let data;
         
           consumer.run({
             eachMessage: async ({ topic, partition, message }) => {
-              let value = JSON.parse(message.value.toString());
-              stop = value.user_id === user_id;
+              let checked = JSON.parse(message.value.toString());
+              if(checked.user_id == user_id) {
+                stopped = true;
+                data = checked
+              }
               console.log({
                 topic,
                 partition,
@@ -55,16 +59,19 @@ const highlightRouting = asyncErrorHandler(async (req, res, next) => {
             }
           });
         
-        while(!stop) {
-            await new Promise(resolve => setTimeout(resolve, 100))
+        let count = 0;
+
+        while(!stopped) {
+            console.log(count++);
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         await consumer.disconnect();
 
-        res.status(200).json({message: "OK"});
+        res.status(200).json({payload: data});
 
     } catch (err) {
-        const error = new CustomError('Kafka Producer Error', 500, err);
+        const error = new CustomError('Kafka Producer Error', 100, err);
         console.log(err);
         await producer.disconnect;
         await consumer.disconnect;

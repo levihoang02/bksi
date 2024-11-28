@@ -2,3 +2,4 @@ Flask
 confluent-kafka
 Marshmallow
 gunicorn
+python-dotenv
