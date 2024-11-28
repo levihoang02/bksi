@@ -1,0 +1,4 @@
+Flask
+confluent-kafka
+Marshmallow
+gunicorn
