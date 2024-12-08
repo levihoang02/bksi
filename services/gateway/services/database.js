@@ -5,7 +5,7 @@ dotenv.config();
 const sequelize = new Sequelize(process.env.DATABASE_NAME, process.env.DATABASE_USER, process.env.DATABASE_PASSWORD, {
     host: process.env.DATABASE_HOST,
     dialect: 'mysql',
-    port: '3306',
+    port: '3310',
     showWarnings: true,
     connectTimeout: 1000,
     pool: {

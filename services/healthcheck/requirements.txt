@@ -1,0 +1,9 @@
+Flask
+confluent-kafka
+python-dotenv
+sqlalchemy
+pyodbc
+mysqlclient
+pymysql
+python-json-logger
+requests

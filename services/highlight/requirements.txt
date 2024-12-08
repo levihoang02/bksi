@@ -3,3 +3,4 @@ confluent-kafka
 Marshmallow
 gunicorn
 python-dotenv
+requests

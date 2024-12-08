@@ -1,0 +1,20 @@
+{
+    "gateway":{
+      "port":8000,
+      "secure": false
+    },
+    "services":[
+        {"name":"ServiceHighlight", "host":"localhost", "port": 5000, "endPoint": ""},
+        {"name":"ServiceReport", "host":"localhost", "port": 5100, "endPoint": ""},
+        {"name":"ServiceAdapter", "host":"localhost", "port": 5200, "endPoint": ""}
+    ],
+    "serviceRegistry":{
+        "database":{
+          "name":"bksi",
+          "user":"root",
+          "password":"312002VH",
+          "host":"localhost",
+          "port":3010
+        }
+    }
+}
