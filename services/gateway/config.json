@@ -4,9 +4,28 @@
       "secure": false
     },
     "services":[
-        {"name":"ServiceHighlight", "host":"localhost", "port": 5000, "endPoint": ""},
-        {"name":"ServiceReport", "host":"localhost", "port": 5100, "endPoint": ""},
-        {"name":"ServiceAdapter", "host":"localhost", "port": 5200, "endPoint": ""}
+        {"name":"Highlight", "instances": [
+          {
+            "id": "Highlight1",
+            "host": "localhost",
+            "port": 5000,
+            "endPoint": ""
+          },
+          {
+            "id": "Highlight2",
+            "host": "localhost",
+            "port": 5200,
+            "endPoint": ""
+          }
+        ]},
+        {"name":"Report", "instances": [
+          {
+            "id": "Report1",
+            "host":"localhost", 
+            "port": 5100, 
+            "endPoint": ""
+          }
+        ]}
     ],
     "serviceRegistry":{
         "database":{

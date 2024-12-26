@@ -69,7 +69,18 @@ services:
       JVM_OPTS: "-Xms32M -Xmx64M"
     networks:
       - app-network
+  
+  redis:
+    image: redis
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  redis-data:

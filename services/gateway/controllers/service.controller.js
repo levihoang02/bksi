@@ -1,6 +1,6 @@
 const asyncErrorHandler = require('../services/errorHandling');
 const CustomError =  require('../utils/CustomError');
-const { Service } = require('../models');
+const { Service, ServiceInstance } = require('../models');
 
 require('dotenv').config();
 
@@ -22,17 +22,28 @@ const findServiceByName = async (name) => {
     return service;
 };
 
-const create = async (name, host=None, port=None, endPoint = None) => {
+const findInstancesByServiceId = async(serviceId) => {
+    const instances = await ServiceInstance.findAll({
+        where: {
+            ServiceId: serviceId
+        }
+    })
+    return instances;
+}
+
+
+const create = async (name) => {
     
     const newService = await Service.create({
         Sname: name,
-        host: host,
-        port: port,
-        endPoint: endPoint
     });
 
     return newService;
 };
+
+const createBulkInstances = async (instances) => {
+    await ServiceInstance.bulkCreate(instances);
+}
 
 const deleteService = asyncErrorHandler(async(req, res, next) => {
     const id = req.body.id;
@@ -49,4 +60,4 @@ const deleteService = asyncErrorHandler(async(req, res, next) => {
     }
 });
 
-module.exports = {create, deleteService, findServiceById, findServiceByName};
+module.exports = {create, deleteService, findServiceById, findServiceByName, createBulkInstances, findInstancesByServiceId };

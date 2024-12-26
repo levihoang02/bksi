@@ -11,23 +11,6 @@ const Service = sequelize.define('Service', {
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
-    },
-    host: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    port: {
-        type: DataTypes.STRING,
-        allowNull: true
-    }, 
-    endPoint: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    status: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true
     }
 });
 
