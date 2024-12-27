@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const helmet = require('helmet');
+const globalErrorHandler = require('./controllers/errorController');
 const cors = require('cors');
 const routing = require('./routes/index');
 const cookieParser = require('cookie-parser');
@@ -21,5 +22,7 @@ app.use(routing);
 app.get('/', (req, res) => {
     res.send('Apis are ready!');
 });
+
+app.use(globalErrorHandler);
 
 module.exports = app;
