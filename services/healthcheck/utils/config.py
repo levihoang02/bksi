@@ -20,3 +20,6 @@ class Config:
     SMTP_SERVER = os.getenv("SMTP_SERVER")
     SMTP_PORT = int(os.getenv("SMTP_PORT"))
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+    
+    #REDIS
+    REDIS_HOST = os.getenv("REDIS_HOST")

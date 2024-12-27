@@ -9,5 +9,8 @@
   },
   "dependencies": {
     "bksi": "file:"
+  },
+  "devDependencies": {
+    "prettier": "3.4.2"
   }
 }

@@ -10,23 +10,26 @@ class Service(Base):
     
     id = Column(CHAR(36, 'utf8mb4_bin'), primary_key=True, default=lambda: str(uuid.uuid4()))
     Sname = Column(String(255), unique=True, nullable=False)  # Ensure nullable=False
-    host = Column(String(255), nullable=True)
-    port = Column(String(255), nullable=True)
-    endPoint = Column(String(255), nullable=True)
-    status = Column(Boolean, nullable=False, default=True)  # Ensure nullable=False and default=True
+    
+    instances = relationship("ServiceInstance", back_populates="service")
 
     def __repr__(self):
         return f"<Service(name={self.Sname}, status={self.status})>"
     
+class ServiceInstance(Base):
+    __tablename__ = 'serviceInstances'
+    
+    id = Column(CHAR(36, 'utf8mb4_bin'), primary_key=True, default=lambda: str(uuid.uuid4()))
+    host = Column(String(255), nullable=True)
+    port = Column(String(255), nullable=True)
+    endPoint = Column(String(255), nullable=True)
+    status = Column(Boolean, nullable=False, default=True)
+    ServiceId = Column(CHAR(36, 'utf8mb4_bin'), ForeignKey('services.id'), nullable=False)
+    
+    service = relationship("Service", back_populates="instances")
 
-def update_service_status(service_name: str, status: bool):
-    """Update service status in database"""
-    session = get_session()
-    service = session.query(Service).filter(Service.Sname == service_name).first()
-    if service:
-        service.status = status
-        session.commit()
-    session.close()
+    def __repr__(self):
+        return f"<Service(name={self.Sname}, status={self.status})>"
 
 def get_services():
     """Fetch all services from database"""
@@ -34,15 +37,29 @@ def get_services():
     services = session.query(Service).all()
     result = [
         {
-            "name": service.Sname,
-            "host": service.host,
-            "port": service.port,
-            "endPoint": service.endPoint
+            "id": service.id,
+            "name": service.Sname
         }
         for service in services
     ]
     session.close()
     return result
 
+def get_instance(service_id):
+    """Fetch all instances for a specific service ID"""
+    session = get_session()
+    instances = session.query(ServiceInstance).filter(ServiceInstance.service_id == service_id).all()
+    result = [
+        {
+            "id": instance.id,
+            "host": instance.host,
+            "port": instance.port,
+            "endPoint": instance.endPoint,
+            "status": instance.status
+        }
+        for instance in instances
+    ]
+    session.close()
+    return result
 
 Base.metadata.create_all(engine)
