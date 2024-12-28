@@ -10,12 +10,12 @@ sequelize.sync({ force: false }).then(() => {
         console.log('Finish initalize Management');
         dotenv.config();
 
-        const PORT = config.gateway.port || 3000;
+        const PORT = process.env.PORT || 3000;
 
         const sever = http.createServer(app);
 
         sever.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
+            console.log(`Service is running on port ${PORT}`);
         });
     });
 });

@@ -1,6 +1,7 @@
 const asyncErrorHandler = require('../services/errorHandling');
 const CustomError = require('../utils/CustomError');
 const { Service, ServiceInstance } = require('../models');
+const sequelize = require('../services/database');
 
 require('dotenv').config();
 
@@ -40,11 +41,24 @@ const updateService = asyncErrorHandler(async (req, res, next) => {
     const id = req.body.id;
     const newName = req.body.name;
     try {
-        const service = await Service.update({
-            Sname: newName,
-        });
-        res.status(200).json({ message: 'success', data: service });
+        const update = await Service.update(
+            {
+                Sname: newName,
+            },
+            {
+                where: {
+                    id: id,
+                },
+                // returning: true,
+            },
+        );
+        if (update[0] === 0) {
+            const error = new CustomError('Service not found', 404);
+            return next(error);
+        }
+        res.status(200).json({ message: 'success' });
     } catch (err) {
+        // console.log(err);
         const error = new CustomError('Failed to update service', 500);
         next(error);
     }
@@ -133,11 +147,12 @@ const createServiceInstance = asyncErrorHandler(async (req, res, next) => {
                 host: host,
                 port: port,
                 endPoint: endPoint,
-                ServiceId: newService.id,
+                ServiceId: service.id,
             });
-            return res.staus(200).json({ message: 'success', data: { service: service, instance: newInstance } });
+            return res.status(200).json({ message: 'success', data: { service: service, instance: newInstance } });
         }
     } catch (err) {
+        console.log(err);
         const error = new CustomError('Failed to create new instance', 500);
         return next(error);
     }
@@ -147,16 +162,24 @@ const updateServiceInstance = asyncErrorHandler(async (req, res, next) => {
     const id = req.body.id;
     const host = req.body.host;
     const port = req.body.port;
-    const endPoint = req.body.endpoint;
+    const endPoint = req.body.endpoint || '';
+    const newId = req.body.newId;
     try {
-        const instance = await ServiceInstance.update({
-            id: id,
-            host: host,
-            port: port,
-            endPoint: endPoint,
-        });
+        await ServiceInstance.update(
+            {
+                id: newId,
+                host: host,
+                port: port,
+                endPoint: endPoint,
+            },
+            {
+                where: {
+                    id: id,
+                },
+            },
+        );
 
-        res.status(200).json({ message: 'success', data: instance });
+        res.status(200).json({ message: 'success' });
     } catch (err) {
         const error = new CustomError('Failed to update service instance', 500);
         next(error);
@@ -165,6 +188,7 @@ const updateServiceInstance = asyncErrorHandler(async (req, res, next) => {
 
 const deleteServiceInstance = asyncErrorHandler(async (req, res, next) => {
     const id = req.body.id;
+    console.log(id);
     try {
         await ServiceInstance.destroy({
             where: {
@@ -185,4 +209,5 @@ module.exports = {
     createServiceInstance,
     updateServiceInstance,
     deleteServiceInstance,
+    getAllServiceInstances,
 };
