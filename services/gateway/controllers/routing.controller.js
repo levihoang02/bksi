@@ -69,7 +69,8 @@ const useService = asyncErrorHandler(async (req, res, next) => {
         console.log(instanceKey);
     } catch (err) {
         // console.error(`Error in useService: ${err.message}`);
-        res.status(500).json({ message: 'Internal service error' });
+        const error = new CustomError('Routing error', 500);
+        next(error);
     } finally {
         // console.log(instanceKey);
         if (instanceKey) {

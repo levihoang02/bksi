@@ -7,13 +7,13 @@
         {"name":"Highlight", "instances": [
           {
             "id": "Highlight1",
-            "host": "localhost",
+            "host": "127.0.0.1",
             "port": 5000,
             "endPoint": ""
           },
           {
             "id": "Highlight2",
-            "host": "localhost",
+            "host": "127.0.0.1",
             "port": 5200,
             "endPoint": ""
           }
@@ -21,8 +21,16 @@
         {"name":"Report", "instances": [
           {
             "id": "Report1",
-            "host":"localhost", 
+            "host":"127.0.0.1", 
             "port": 5100, 
+            "endPoint": ""
+          }
+        ]},
+        {"name":"Manage", "instances": [
+          {
+            "id": "Manage1",
+            "host":"127.0.0.1", 
+            "port": 3200,
             "endPoint": ""
           }
         ]}

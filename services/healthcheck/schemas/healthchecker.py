@@ -83,7 +83,7 @@ class HealthChecker:
         try:
             if message['type'] == 'pmessage':
                 # Extract the key from the channel
-                channel = message['channel'].decode('utf-8')
+                channel = message['channel']
                 key = channel.split(':')[-1]
                 self.handle_instance_change(key)
         except Exception as e:

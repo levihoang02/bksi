@@ -2,7 +2,7 @@ const express = require('express');
 const serviceController = require('../controllers/service.controller');
 const ratingController = require('../controllers/rating.controller');
 
-const router = require('express').Router();
+const router = express.Router();
 
 /*CRUD service route */
 

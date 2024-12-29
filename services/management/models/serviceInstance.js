@@ -9,21 +9,21 @@ const ServiceInstance = sequelize.define('ServiceInstance', {
     },
     host: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
     },
     port: {
         type: DataTypes.STRING,
-        allowNull: true
-    }, 
+        allowNull: true,
+    },
     endPoint: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
     },
     status: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true
-    }
+        defaultValue: true,
+    },
 });
 
 Service.hasMany(ServiceInstance);

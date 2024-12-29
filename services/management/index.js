@@ -9,9 +9,8 @@ sequelize.sync({ force: false }).then(() => {
     initialize().then(() => {
         console.log('Finish initalize Management');
         dotenv.config();
-
         const PORT = process.env.PORT || 3000;
-
+        const models = require('./models/index');
         const sever = http.createServer(app);
 
         sever.listen(PORT, () => {

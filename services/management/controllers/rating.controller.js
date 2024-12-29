@@ -4,7 +4,7 @@ const CustomError = require('../utils/CustomError');
 const { ServiceRating, Service } = require('../models');
 
 const createNewRating = asyncErrorHandler(async (req, res, next) => {
-    const serviceName = req.body.service;
+    const serviceName = req.body.serviceName;
     const ratingType = req.body.type;
 
     try {

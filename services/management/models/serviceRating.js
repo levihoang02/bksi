@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../services/database');
 const Service = require('./service');
 
-const ServiceRating = sequelize.define('ServiceInstance', {
+const ServiceRating = sequelize.define('ServiceRating', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
