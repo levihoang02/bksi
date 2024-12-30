@@ -6,6 +6,7 @@ const { ServiceRating, Service } = require('../models');
 const createNewRating = asyncErrorHandler(async (req, res, next) => {
     const serviceName = req.body.serviceName;
     const ratingType = req.body.type;
+    console.log("Type1" ,ratingType);
 
     try {
         const service = await Service.findOne({
@@ -22,6 +23,7 @@ const createNewRating = asyncErrorHandler(async (req, res, next) => {
         });
         res.status(200).json({ message: 'success' });
     } catch (err) {
+        console.log(err);
         const error = new CustomError('Failed to rate service', 500);
         next(error);
     }
