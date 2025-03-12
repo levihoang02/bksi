@@ -66,7 +66,7 @@ const useService = asyncErrorHandler(async (req, res, next) => {
 
         await proxyRequest;
 
-        console.log(instanceKey);
+        // console.log(instanceKey);
     } catch (err) {
         // console.error(`Error in useService: ${err.message}`);
         const error = new CustomError('Routing error', 500);

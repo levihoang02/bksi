@@ -1,12 +1,14 @@
 const express = require('express');
 const routingController = require('../controllers/routing.controller');
 const serviceController = require('../controllers/service.controller');
+const authController = require('../controllers/auth');
+const { validateAPIKeyMiddleware } = require('../middlewares/auth');
 
 const router = require('express').Router();
 
 /*CRUD service route */
 
-router.get('/service', (req, res, next) => routingController.useService(req, res, next));
+router.post('/services', (req, res, next) => routingController.useService(req, res, next));
 
 //create
 router.post('/service', (req, res, next) => routingController.useService(req, res, next));
@@ -28,5 +30,9 @@ router.post('/rate', (req, res, next) => routingController.useService(req, res, 
 
 /*use service router */
 router.post('/use', (req, res, next) => routingController.useService(req, res, next));
+
+router.use(validateAPIKeyMiddleware);
+
+router.post('/key', (req, res, next) => authController.generateAPIToken(req, res, next));
 
 module.exports = router;

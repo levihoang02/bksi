@@ -1,19 +1,85 @@
 const redis = require('redis');
 
-const client = redis.createClient({
-    host: '127.0.0.1',
-    port: 6379,
-});
+let client = null;
+let redisAvailable = false;
+const RECONNECT_INTERVAL = 30000;
+
+function setupRedisClient() {
+    if (client) {
+        // Clean up existing listeners and client
+        client.removeAllListeners();
+        client.quit().catch(() => {});
+    }
+
+    client = redis.createClient({
+        host: '127.0.0.1',
+        port: 6379,
+        retry_strategy: () => null,
+    });
+
+    client.on('error', () => {
+        redisAvailable = false;
+        client.removeAllListeners();
+        client.quit().catch(() => {});
+        client = null;
+    });
+
+    client.on('end', () => {
+        redisAvailable = false;
+        client.removeAllListeners();
+        client.quit().catch(() => {});
+        client = null;
+    });
+
+    client.on('connect', () => {
+        console.log('Redis connected');
+        redisAvailable = true;
+    });
+
+    return client;
+}
+
+async function tryConnect() {
+    try {
+        if (!client) {
+            client = setupRedisClient();
+            console.log(client);
+        }
+        if (client && !client.isOpen) {
+            await Promise.race([
+                client.connect(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000)),
+            ]);
+        }
+        return true;
+    } catch (error) {
+        redisAvailable = false;
+        return false;
+    }
+}
+
+// Initial connection attempt
+setupRedisClient();
+tryConnect();
+
+// Periodically try to reconnect if Redis is unavailable
+setInterval(async () => {
+    if (!redisAvailable) {
+        await tryConnect();
+    }
+}, RECONNECT_INTERVAL);
 
 async function withRedisClient(operation) {
-    if (!client.isOpen) {
-        await client.connect();
+    if (!redisAvailable || !client) {
+        return null;
     }
+
     try {
         return await operation();
     } catch (error) {
-        console.error('Redis operation failed:', error);
-        throw error;
+        console.warn('Redis operation failed:', error.message);
+        redisAvailable = false; // Mark as unavailable on error
+        return null;
     }
 }
 
@@ -28,4 +94,11 @@ process.on('SIGINT', async () => {
     }
 });
 
-module.exports = { client, withRedisClient };
+async function setWithExpiry(key, value, expirySeconds = 3600) {
+    return await withRedisClient(async () => {
+        // Using built-in SET with EX option
+        await client.set(key, value, { EX: expirySeconds });
+    });
+}
+
+module.exports = { client, withRedisClient, setWithExpiry };
