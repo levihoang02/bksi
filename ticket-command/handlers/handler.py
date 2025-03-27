@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from models.event import Event
 from kafka_utils.producer import KafkaProducerService
 from utils.config import Config
+from helpers.html import decode_html
 
 config = Config()
 
@@ -21,12 +22,18 @@ class AbstractEventHandler(ABC):
 class InsertEventHandler(AbstractEventHandler):
     def handle_event(self, event: dict):
         new_data = event["after"]
-        event = Event(
-            source= 'ticket-command',
-            op= 'c',
-            payload= new_data
-        )
-        producer.send_message('tickets', event)
+        if(new_data["created_by"] == "customer"):
+            raw_content = decode_html(new_data["message"])
+            payload = {
+                "ticket_id": new_data["id"],
+                "content":  raw_content
+            }
+            event = Event(
+                source= 'ticket-command',
+                op= 'c',
+                payload= payload
+            )
+            return producer.send_message('tickets', event)
 
 class UpdateEventHandler(AbstractEventHandler):
     def handle_event(self, event: dict):

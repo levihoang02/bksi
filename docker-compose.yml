@@ -155,14 +155,14 @@ services:
                     "name": "mysql-connector",
                     "config": {
                         "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-                        "database.hostname": "mysql",
+                        "database.hostname": "127.0.0.1",
                         "database.port": "3306",
-                        "database.user": "mysqluser",
-                        "database.password": "mysqlpw",
+                        "database.user": "root",
+                        "database.password": "12345678",
                         "database.server.id": "1",
-                        "database.server.name": "dbserver1",
-                        "database.include.list": "inventory",
-                        "table.include.list": "inventory.customers",
+                        "database.server.name": "uvdesk",
+                        "database.include.list": "root",
+                        "table.include.list": "root.uv_thread",
                         "database.history.kafka.bootstrap.servers": "kafka-1:19092,kafka-2:19093,kafka-3:19094",
                         "database.history.kafka.topic": "schema-changes.inventory",
                         "include.schema.changes": "true"
@@ -172,9 +172,27 @@ services:
             - kafka-1
             - kafka-2
             - kafka-3
-            - mysql
         networks:
             - app-network
+
+    ticket-command:
+        build:
+            context: .
+            dockerfile: ticket-command/Dockerfile
+        container_name: ticket-command
+        ports:
+            - '9010:9010'
+        user: root
+        env_file:
+            - ./ticket-command/.env
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+            - connect
+        networks:
+            - app-network
+
 networks:
     app-network:
         driver: bridge

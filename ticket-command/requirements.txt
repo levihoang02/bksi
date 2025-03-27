@@ -4,4 +4,4 @@ python-dotenv
 pymongo
 pydantic
 retry
-BeautifulSoup
+bs4
