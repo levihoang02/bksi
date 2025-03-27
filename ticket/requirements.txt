@@ -1,0 +1,8 @@
+fastapi
+confluent-kafka
+Marshmallow
+gunicorn
+uvicorn
+python-dotenv
+pymongo
+retry

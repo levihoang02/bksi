@@ -1,0 +1,5 @@
+confluent-kafka
+flask
+python-dotenv
+requests
+pydantic
