@@ -33,7 +33,7 @@ class InsertEventHandler(AbstractEventHandler):
                 op= 'c',
                 payload= payload
             )
-            return producer.send_message('tickets', event)
+            return producer.send_message('tickets', key=str(new_data["id"]), message=event.dict())
 
 class UpdateEventHandler(AbstractEventHandler):
     def handle_event(self, event: dict):
