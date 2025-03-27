@@ -1,2 +1,0 @@
-class EventTypes:
-    CREATE_TICKET_EVENT = "TICKET_CREATED"

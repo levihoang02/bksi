@@ -3,3 +3,5 @@ Marshmallow
 python-dotenv
 pymongo
 pydantic
+retry
+BeautifulSoup

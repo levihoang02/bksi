@@ -134,7 +134,47 @@ services:
             - prometheus
         networks:
             - app-network
-
+    connect:
+        image: debezium/connect:latest
+        container_name: connect
+        ports:
+            - '8083:8083'
+        environment:
+            GROUP_ID: 1
+            BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19093,kafka-3:19094
+            CONFIG_STORAGE_TOPIC: connect_configs
+            OFFSET_STORAGE_TOPIC: connect_offsets
+            STATUS_STORAGE_TOPIC: connect_statuses
+            CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+            CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+            CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+            CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+            # Auto create connector
+            CONNECT_CONNECTOR_CONFIGURATION: |
+                {
+                    "name": "mysql-connector",
+                    "config": {
+                        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+                        "database.hostname": "mysql",
+                        "database.port": "3306",
+                        "database.user": "mysqluser",
+                        "database.password": "mysqlpw",
+                        "database.server.id": "1",
+                        "database.server.name": "dbserver1",
+                        "database.include.list": "inventory",
+                        "table.include.list": "inventory.customers",
+                        "database.history.kafka.bootstrap.servers": "kafka-1:19092,kafka-2:19093,kafka-3:19094",
+                        "database.history.kafka.topic": "schema-changes.inventory",
+                        "include.schema.changes": "true"
+                    }
+                }
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+            - mysql
+        networks:
+            - app-network
 networks:
     app-network:
         driver: bridge
