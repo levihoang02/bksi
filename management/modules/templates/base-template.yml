@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+    ${MODULE_NAME}:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ${MODULE_NAME}
+        user: '1000:1000' # Non-root user
+        cap_drop:
+            - ALL
+        security_opt:
+            - no-new-privileges:true
+            - seccomp:unconfined
+            - apparmor:unconfined
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
+                reservations:
+                    cpus: '0.25'
+                    memory: 256M
+        networks:
+            - module-network
+        read_only: true
+        tmpfs:
+            - /tmp
+            - /var/run
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:${PORT}/health']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+
+networks:
+    module-network:
+        driver: bridge
+        internal: true
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.20.0.0/16

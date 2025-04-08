@@ -193,6 +193,135 @@ services:
         networks:
             - app-network
 
+    node-exporter:
+        image: prom/node-exporter:latest
+        container_name: node-exporter
+        restart: unless-stopped
+        volumes:
+            - /proc:/host/proc:ro
+            - /sys:/host/sys:ro
+            - /:/rootfs:ro
+        command:
+            - '--path.procfs=/host/proc'
+            - '--path.rootfs=/rootfs'
+            - '--path.sysfs=/host/sys'
+            - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+        ports:
+            - '9100:9100'
+        networks:
+            - app-network
+
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor:latest
+        container_name: cadvisor
+        restart: unless-stopped
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:ro
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /dev/disk/:/dev/disk:ro
+        ports:
+            - '8081:8080'
+        networks:
+            - app-network
+
+    ai-demo:
+        build:
+            context: .
+            dockerfile: ai-services/service-interface/Dockerfile
+        container_name: AI-demo
+        env_file:
+            - ./ai-services/service-interface/.env
+        ports:
+            - '8120:8120'
+        networks:
+            - app-network
+
+    mysql:
+        image: mysql:8.0
+        container_name: mysql-container
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: mydatabase
+            MYSQL_USER: myuser
+            MYSQL_PASSWORD: mypassword
+        ports:
+            - '3308:3308'
+        volumes:
+            - mysql-data:/var/lib/mysql
+        networks:
+            - app-network
+
+    management-module:
+        build:
+            context: .
+            dockerfile: management/Dockerfile
+        image: management-module:latest
+        deploy:
+            replicas: 1
+            placement:
+                constraints:
+                    - node.role == manager
+            restart_policy:
+                condition: on-failure
+                max_attempts: 3
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+            update_config:
+                parallelism: 1
+                delay: 10s
+                order: start-first
+            rollback_config:
+                parallelism: 1
+                delay: 10s
+                order: stop-first
+        ports:
+            - target: 3200
+              published: 3200
+              protocol: tcp
+              mode: host
+        env_file:
+            - ./management/.env
+        volumes:
+            - type: bind
+              source: /var/run/docker.sock
+              target: /var/run/docker.sock
+              read_only: false
+            - type: bind
+              source: ./management/modules
+              target: /app/modules
+              read_only: true
+        user: '1000:1000'
+        cap_drop:
+            - ALL
+        cap_add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        security_opt:
+            - no-new-privileges:true
+            - seccomp:unconfined
+            - apparmor:unconfined
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        networks:
+            - app-network
+        secrets:
+            - source: jwt_secret
+              target: /run/secrets/jwt_secret
+              uid: '1000'
+              gid: '1000'
+              mode: 0400
+        depends_on:
+            - mysql
+
 networks:
     app-network:
         driver: bridge
@@ -206,3 +335,4 @@ volumes:
     grafana_data:
     prom-config:
         driver: local
+    mysql-data:
