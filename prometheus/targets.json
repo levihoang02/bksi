@@ -1,6 +1,6 @@
 [
   {
-    "targets": ["my-app:8080"],
+    "targets": ["my-app:9020"],
     "labels": { "job": "my-app" }
   }
 ]

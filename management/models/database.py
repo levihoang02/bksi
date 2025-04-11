@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.ext.declarative import declarative_base
+import os
 
 Base = declarative_base()
-
 class Database:
     def __init__(self, db_url, pool_size=5, max_overflow=10, pool_timeout=30, pool_recycle=3600):
         self.db_url = db_url
@@ -24,4 +24,15 @@ class Database:
     def create_all(self):
         Base.metadata.create_all(self.engine)
 
+DB_USERNAME = os.getenv("DB_USERNAME")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DATABASE_URL = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+SKELETON_PROCESSOR_PATH = os.path.join("skeleton", "modules", "processor", "process.py")
+ENV_PATH = os.path.join("skeleton", ".env")
+
+db = Database(DATABASE_URL)
 

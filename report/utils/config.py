@@ -4,12 +4,4 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    KAFKA_BROKERS_INTERNAL = os.getenv("KAFKA_BROKERS_INTERNAL")
-    KAFKA_BROKERS_EXTERNAL = os.getenv("KAFKA_BROKERS_EXTERNAL")
-    DATABASE_NAME = os.getenv("DATABASE_NAME")
-    DATABASE_USER = os.getenv("DATABASE_USER")
-    DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-    DATABASE_HOST = os.getenv("DATABASE_HOST")
-    DATABASE_PORT = os.getenv("DATABASE_PORT")
-    KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID")
-    KAFKA_REPORT_TOPIC = os.getenv("KAFKA_REPORT_TOPIC")
+    MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/feedback_db')

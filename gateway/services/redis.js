@@ -60,18 +60,25 @@ async function tryConnect() {
 
 // Initial connection attempt
 setupRedisClient();
-tryConnect();
 
-// Periodically try to reconnect if Redis is unavailable
-setInterval(async () => {
-    if (!redisAvailable) {
-        await tryConnect();
+async function initializeRedis() {
+    console.log('Initializing Redis...');
+    try {
+        const connected = await tryConnect();
+        if (!connected) {
+            throw new Error('Failed to connect to Redis');
+        }
+        console.log('Redis initialization complete');
+        return true;
+    } catch (error) {
+        console.error('Redis initialization failed:', error);
+        throw error;
     }
-}, RECONNECT_INTERVAL);
+}
 
 async function withRedisClient(operation) {
     if (!redisAvailable || !client) {
-        return null;
+        await tryConnect();
     }
 
     try {
@@ -101,4 +108,4 @@ async function setWithExpiry(key, value, expirySeconds = 3600) {
     });
 }
 
-module.exports = { client, withRedisClient, setWithExpiry };
+module.exports = { client, withRedisClient, setWithExpiry, initializeRedis };

@@ -1,7 +1,7 @@
 const httpProxy = require('express-http-proxy');
 const asyncErrorHandler = require('../services/errorHandling');
 const CustomError = require('../utils/CustomError');
-const { findServiceInstanceByName } = require('../controllers/service.controller');
+const { findServiceInstanceEndPoint } = require('../controllers/service.controller');
 const {
     getLeastConnectionsInstance,
     incrementConnection,
@@ -11,38 +11,46 @@ const {
 require('dotenv').config();
 
 const useService = asyncErrorHandler(async (req, res, next) => {
-    const serviceName = req.body.service;
+    const endPoint = req.params.endPoint;
+    const proxyEndpoint = req.params[0];
     let instanceKey;
     try {
-        let serviceInstance = await getLeastConnectionsInstance(serviceName);
+        let serviceInstance = await getLeastConnectionsInstance(endPoint);
         //   console.log(serviceInstance);
-
         if (!serviceInstance) {
             // Fallback to fetching and storing service instances
-            const serviceInstances = await findServiceInstanceByName(serviceName);
+            const serviceInstances = await findServiceInstanceEndPoint(endPoint);
             if (serviceInstances && serviceInstances.length > 0) {
-                await storeInstances(serviceName, serviceInstances);
+                const plainInstances = serviceInstances.map((instance) => instance.get({ plain: true }));
+                await storeInstances(endPoint, plainInstances);
                 serviceInstance = serviceInstances[0]; // Pick the first one after storing
             }
         }
-
         if (!serviceInstance) {
             res.status(404).json({ message: 'Service is not available' });
             return;
         }
-        instanceKey = `${serviceName}:instances:${serviceInstance.id}`;
+        instanceKey = `${endPoint}:instances:${serviceInstance.id}`;
         // Increment active connection count
-        await incrementConnection(serviceName, instanceKey);
+        await incrementConnection(endPoint, instanceKey);
 
         // Construct the proxy path
-        const path = `http://${serviceInstance.host}:${serviceInstance.port}${serviceInstance.endPoint || ''}`;
+        let path = `http://${serviceInstance.host}:${serviceInstance.port}`;
+        if (proxyEndpoint) {
+            path = `${path}/${proxyEndpoint.replace(/^\/+|\/+$/g, '')}`;
+        }
         console.log(`Proxying request to: ${path}`);
 
-        // Proxy the request with enhanced error handling
+        // Proxy the request
         const proxyRequest = new Promise((resolve, reject) => {
             const proxyMiddleware = httpProxy(path, {
                 proxyTimeout: 10000,
                 timeout: 10000,
+                proxyReqPathResolver: function (req) {
+                    const originalPath = req.url;
+                    const newPath = originalPath.replace(`/route/${endPoint}`, '');
+                    return newPath || '/';
+                },
             });
 
             res.on('finish', () => {
@@ -52,7 +60,7 @@ const useService = asyncErrorHandler(async (req, res, next) => {
             proxyMiddleware(req, res, (proxyError) => {
                 if (proxyError) {
                     console.error('Proxy error:', {
-                        service: serviceName,
+                        service: endPoint,
                         instance: instanceKey,
                         error: proxyError.message,
                         code: proxyError.code,
@@ -74,7 +82,7 @@ const useService = asyncErrorHandler(async (req, res, next) => {
     } finally {
         // console.log(instanceKey);
         if (instanceKey) {
-            await decrementConnection(serviceName, instanceKey);
+            await decrementConnection(endPoint, instanceKey);
         }
     }
 });

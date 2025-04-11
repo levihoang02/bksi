@@ -1,8 +1,5 @@
-Flask
-confluent-kafka
+flask
+flask-cors
+pymongo
 python-dotenv
-sqlalchemy
-pyodbc
-mysqlclient
-pymysql
-python-json-logger
+prometheus-client

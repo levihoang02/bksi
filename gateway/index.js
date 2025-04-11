@@ -5,7 +5,7 @@ const sequelize = require('./services/database');
 const config = require('./config')();
 const initialize = require('./initialize');
 
-sequelize.sync({ alter: false }).then(() => {
+sequelize.sync({ force: false }).then(() => {
     console.log('Database is ready');
     initialize().then(() => {
         console.log('Finish initalize gateway');

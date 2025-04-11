@@ -1,0 +1,11 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'confirm-service'
+
+receivers:
+  - name: 'confirm-service'
+    webhook_configs:
+      - url: 'http://healthcheck:8001/alert'
+        send_resolved: true

@@ -2,36 +2,43 @@ const express = require('express');
 const routingController = require('../controllers/routing.controller');
 const serviceController = require('../controllers/service.controller');
 const authController = require('../controllers/auth');
-const { validateAPIKeyMiddleware } = require('../middlewares/auth');
+const userController = require('../controllers/user.controller');
+const { validateAPIKeyMiddleware, checkJwt } = require('../middlewares/auth');
 
 const router = require('express').Router();
 
-/*CRUD service route */
+// user routes
+router.post('/signup', userController.signup);
+router.post('/login', userController.login);
+router.post('logout', userController.logout);
 
-router.post('/services', (req, res, next) => routingController.useService(req, res, next));
+router.get('/refresh', checkJwt, (req, res, next) => userController.refresh(req, res, next));
+router.get('/key', checkJwt, (req, res, next) => authController.generateAPIToken(req, res, next));
 
-//create
-router.post('/service', (req, res, next) => routingController.useService(req, res, next));
-//delete
-router.delete('/service', (req, res, next) => routingController.useService(req, res, next));
-//update
-router.put('/service', (req, res, next) => routingController.useService(req, res, next));
+// service route
+router.post('/service', checkJwt, serviceController.createNewServiceAPI);
+router.delete('/service', checkJwt, serviceController.deleteService);
+router.get('/service', checkJwt, serviceController.getAllServiceAPI);
+router.get('/service/:name', checkJwt, serviceController.getServiceByNameAPI);
 
-/*end CRUD service route */
-
-/*instace service router */
-router.post('/instance', (req, res, next) => routingController.useService(req, res, next));
-router.post('/instance/create', (req, res, next) => serviceController.createNewServiceInstance(req, res, next));
-
-/* rating route */
-
-router.post('/rate', (req, res, next) => routingController.useService(req, res, next));
+router.post('/instance', checkJwt, serviceController.createNewInstanceAPI);
+router.delete('/instance', checkJwt, serviceController.deleteInstanceAPI);
 
 /*use service router */
-router.post('/use', (req, res, next) => routingController.useService(req, res, next));
-
 // router.use(validateAPIKeyMiddleware);
+router.post('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
+router.post('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
 
-router.post('/key', (req, res, next) => authController.generateAPIToken(req, res, next));
+router.get('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
+router.get('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+
+router.delete('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
+router.delete('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+
+router.put('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
+router.put('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+
+router.patch('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
+router.patch('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
 
 module.exports = router;

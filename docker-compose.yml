@@ -97,10 +97,36 @@ services:
             - '9090:9090'
         volumes:
             - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
             - prom-config:/etc/prometheus/targets
         command:
             - '--config.file=/etc/prometheus/prometheus.yml'
             - '--web.enable-lifecycle'
+        networks:
+            - app-network
+    alertmanager:
+        image: prom/alertmanager
+        container_name: alertmanager
+        ports:
+            - '9093:9093'
+        volumes:
+            - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+        command:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+        restart: always
+        networks:
+            - app-network
+
+    healthcheck:
+        build:
+            context: .
+            dockerfile: healthcheck/Dockerfile
+        container_name: healthcheck
+        ports:
+            - '8001:8001'
+        user: root
+        env_file:
+            - ./healthcheck/.env
         networks:
             - app-network
     dashboard:
@@ -108,6 +134,8 @@ services:
             context: .
             dockerfile: dashboard/Dockerfile
         container_name: dashboard
+        environment:
+            - PYTHONUNBUFFERED=1
         ports:
             - '8080:8080'
         volumes:
@@ -237,35 +265,28 @@ services:
             - '8120:8120'
         networks:
             - app-network
-
-    mysql:
-        image: mysql:8.0
-        container_name: mysql-container
-        environment:
-            MYSQL_ROOT_PASSWORD: rootpassword
-            MYSQL_DATABASE: mydatabase
-            MYSQL_USER: myuser
-            MYSQL_PASSWORD: mypassword
-        ports:
-            - '3308:3308'
-        volumes:
-            - mysql-data:/var/lib/mysql
-        networks:
-            - app-network
-
     management-module:
         build:
             context: .
             dockerfile: management/Dockerfile
-        image: management-module:latest
+        ports:
+            - '3200:3200'
+        env_file:
+            - ./management/.env
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        user: '1000:1000' # Run as non-root user
+        cap_drop:
+            - ALL # Drop all capabilities
+        cap_add:
+            - NET_ADMIN # Add only required capabilities
+        security_opt:
+            - no-new-privileges:true
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
         deploy:
-            replicas: 1
-            placement:
-                constraints:
-                    - node.role == manager
-            restart_policy:
-                condition: on-failure
-                max_attempts: 3
             resources:
                 limits:
                     cpus: '1'
@@ -273,54 +294,24 @@ services:
                 reservations:
                     cpus: '0.5'
                     memory: 512M
-            update_config:
-                parallelism: 1
-                delay: 10s
-                order: start-first
-            rollback_config:
-                parallelism: 1
-                delay: 10s
-                order: stop-first
-        ports:
-            - target: 3200
-              published: 3200
-              protocol: tcp
-              mode: host
-        env_file:
-            - ./management/.env
-        volumes:
-            - type: bind
-              source: /var/run/docker.sock
-              target: /var/run/docker.sock
-              read_only: false
-            - type: bind
-              source: ./management/modules
-              target: /app/modules
-              read_only: true
-        user: '1000:1000'
-        cap_drop:
-            - ALL
-        cap_add:
-            - NET_ADMIN
-            - SYS_ADMIN
-        security_opt:
-            - no-new-privileges:true
-            - seccomp:unconfined
-            - apparmor:unconfined
-        ulimits:
-            nofile:
-                soft: 65536
-                hard: 65536
         networks:
             - app-network
-        secrets:
-            - source: jwt_secret
-              target: /run/secrets/jwt_secret
-              uid: '1000'
-              gid: '1000'
-              mode: 0400
+
+    report-service:
+        build:
+            context: .
+            dockerfile: report/Dockerfile
+        ports:
+            - '5000:5000'
+        environment:
+            - MONGO_URI=mongodb://admin:password@mongodb:27017/feedback_db?authSource=admin
+            - FLASK_ENV=production
+            - FLASK_APP=main.py
         depends_on:
-            - mysql
+            - mongodb
+        networks:
+            - app-network
+        restart: always
 
 networks:
     app-network:
@@ -335,4 +326,3 @@ volumes:
     grafana_data:
     prom-config:
         driver: local
-    mysql-data:

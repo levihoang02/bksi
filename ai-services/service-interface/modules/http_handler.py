@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 import json
 import asyncio
 from .processor.process import process
-from .prometheus_metrics import REQUEST_SUCCESS, REQUEST_FAILURE, PROCESS_TIME
+from .prometheus_metrics import REQUEST_SUCCESS, REQUEST_FAILURE, PROCESS_TIME, get_metrics
 
 app = FastAPI()
 
@@ -12,6 +12,11 @@ async def health_check():
     return {
         "status": "healthy",
     }
+
+@app.get("/metrics")
+async def metrics():
+    metrics_data, content_type = get_metrics()
+    return Response(content=metrics_data, media_type=content_type)
 
 @app.post("/process")
 async def process_request(data: dict):

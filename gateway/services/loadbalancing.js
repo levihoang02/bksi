@@ -1,11 +1,10 @@
 const { client, withRedisClient } = require('./redis');
 
-async function storeInstances(serviceName, instances) {
+async function storeInstances(endPoint, instances) {
     return withRedisClient(async () => {
         const multi = client.multi();
-
         for (const instance of instances) {
-            const instanceKey = `${serviceName}:instances:${instance.id}`;
+            const instanceKey = `${endPoint}:instances:${instance.id}`;
 
             multi.hSet(
                 instanceKey,
@@ -18,12 +17,10 @@ async function storeInstances(serviceName, instances) {
 
             multi.hSet(instanceKey, 'port', instance.port);
 
-            multi.hSet(instanceKey, 'endpoint', instance.endpoint || '');
-
             multi.hSet(instanceKey, 'status', instance.status ? 'true' : 'false');
 
             // Add to sorted set with explicit parameters
-            multi.zAdd(`${serviceName}:connections`, {
+            multi.zAdd(`${endPoint}:connections`, {
                 score: 0,
                 value: instanceKey,
             });
@@ -33,9 +30,9 @@ async function storeInstances(serviceName, instances) {
     });
 }
 
-async function getLeastConnectionsInstance(serviceName) {
+async function getLeastConnectionsInstance(endPoint) {
     return withRedisClient(async () => {
-        const connectionsKey = `${serviceName}:connections`;
+        const connectionsKey = `${endPoint}:connections`;
 
         // Fetch all instances sorted by least connections
         const instanceKeys = await client.zRange(connectionsKey, 0, -1);
@@ -65,17 +62,17 @@ async function getLeastConnectionsInstance(serviceName) {
     });
 }
 
-async function incrementConnection(serviceName, instanceId) {
+async function incrementConnection(endPoint, instanceId) {
     return withRedisClient(async () => {
-        const connectionsKey = `${serviceName}:connections`;
+        const connectionsKey = `${endPoint}:connections`;
         await client.zIncrBy(connectionsKey, 1, instanceId);
     });
 }
 
-async function decrementConnection(serviceName, instanceId) {
+async function decrementConnection(endPoint, instanceId) {
     // console.log("Decreasing...")
     return withRedisClient(async () => {
-        const connectionsKey = `${serviceName}:connections`;
+        const connectionsKey = `${endPoint}:connections`;
         await client.zIncrBy(connectionsKey, -1, instanceId);
     });
 }

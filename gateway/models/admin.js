@@ -20,7 +20,7 @@ const Admin = sequelize.define('Admin', {
         type: DataTypes.STRING,
         allowNull: false,
         unique: false,
-    }
+    },
 });
 
 module.exports = Admin;

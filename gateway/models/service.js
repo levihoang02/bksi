@@ -11,7 +11,11 @@ const Service = sequelize.define('Service', {
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
-    }
+    },
+    endPoint: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
 });
 
 module.exports = Service;
