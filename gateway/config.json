@@ -1,19 +1,14 @@
 {
     "gateway":{
-      "port":8000,
+      "port":8210,
       "secure": false
     },
     "services":[
-        {"name":"Highlight", "endPoint": "highlight", "instances": [
+        {"name":"Dashboard", "endPoint": "dashboard", "instances": [
           {
-            "id": "Highlight1",
+            "id": "Dashboard1",
             "host": "127.0.0.1",
-            "port": 5000
-          },
-          {
-            "id": "Highlight2",
-            "host": "127.0.0.1",
-            "port": 5200
+            "port": 8080
           }
         ]},
         {"name":"Report",  "endPoint": "report", "instances": [

@@ -1,8 +1,10 @@
-fastapi
 confluent-kafka
 Marshmallow
-gunicorn
-uvicorn
+flask
 python-dotenv
 pymongo
+pydantic
 retry
+bs4
+prometheus-client
+psutil

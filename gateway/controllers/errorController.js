@@ -11,12 +11,12 @@ module.exports = (error, req, res, next) => {
         stack: error.stack,
         path: req.originalUrl,
         method: req.method,
-        requestId: req.id
+        requestId: req.id,
     });
 
     res.status(error.statusCode).json({
         status: error.status,
         message: error.message,
-        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
     });
 };

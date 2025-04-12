@@ -5,12 +5,7 @@ const { initializeRedis } = require('./services/redis');
 
 const initialize = async () => {
     console.log('Inittialzing gateway...');
-    try {
-        await initializeRedis();
-    } catch (error) {
-        console.error('Failed to initialize Redis:', error);
-        process.exit(1);
-    }
+    await initializeRedis();
     let services = config.services;
     if (services) {
         for (const service of services) {

@@ -1,7 +1,8 @@
-const { client, withRedisClient } = require('./redis');
+const { getClient, withRedisClient } = require('./redis');
 
 async function storeInstances(endPoint, instances) {
     return withRedisClient(async () => {
+        const client = getClient();
         const multi = client.multi();
         for (const instance of instances) {
             const instanceKey = `${endPoint}:instances:${instance.id}`;
@@ -32,6 +33,7 @@ async function storeInstances(endPoint, instances) {
 
 async function getLeastConnectionsInstance(endPoint) {
     return withRedisClient(async () => {
+        const client = getClient();
         const connectionsKey = `${endPoint}:connections`;
 
         // Fetch all instances sorted by least connections
@@ -64,6 +66,7 @@ async function getLeastConnectionsInstance(endPoint) {
 
 async function incrementConnection(endPoint, instanceId) {
     return withRedisClient(async () => {
+        const client = getClient();
         const connectionsKey = `${endPoint}:connections`;
         await client.zIncrBy(connectionsKey, 1, instanceId);
     });
@@ -72,6 +75,7 @@ async function incrementConnection(endPoint, instanceId) {
 async function decrementConnection(endPoint, instanceId) {
     // console.log("Decreasing...")
     return withRedisClient(async () => {
+        const client = getClient();
         const connectionsKey = `${endPoint}:connections`;
         await client.zIncrBy(connectionsKey, -1, instanceId);
     });

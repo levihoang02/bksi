@@ -1,7 +1,0 @@
-confluent-kafka
-Marshmallow
-python-dotenv
-pymongo
-pydantic
-retry
-bs4

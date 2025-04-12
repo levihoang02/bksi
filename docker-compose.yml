@@ -137,7 +137,7 @@ services:
         environment:
             - PYTHONUNBUFFERED=1
         ports:
-            - '8080:8080'
+            - '8081:8081'
         volumes:
             - prom-config:/etc/prometheus/targets
         user: root
@@ -202,58 +202,35 @@ services:
             - kafka-3
         networks:
             - app-network
-
-    ticket-command:
+    ticket-service:
         build:
             context: .
-            dockerfile: ticket-command/Dockerfile
-        container_name: ticket-command
+            dockerfile: ticket/Dockerfile
+        container_name: ticket-service
         ports:
-            - '9010:9010'
+            - '8080:8080'
         user: root
         env_file:
-            - ./ticket-command/.env
+            - ./ticket/.env
         depends_on:
             - kafka-1
             - kafka-2
             - kafka-3
             - connect
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 5G
+                reservations:
+                    cpus: '1'
+                    memory: 2G
         networks:
             - app-network
-
-    node-exporter:
-        image: prom/node-exporter:latest
-        container_name: node-exporter
-        restart: unless-stopped
-        volumes:
-            - /proc:/host/proc:ro
-            - /sys:/host/sys:ro
-            - /:/rootfs:ro
-        command:
-            - '--path.procfs=/host/proc'
-            - '--path.rootfs=/rootfs'
-            - '--path.sysfs=/host/sys'
-            - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-        ports:
-            - '9100:9100'
-        networks:
-            - app-network
-
-    cadvisor:
-        image: gcr.io/cadvisor/cadvisor:latest
-        container_name: cadvisor
-        restart: unless-stopped
-        volumes:
-            - /:/rootfs:ro
-            - /var/run:/var/run:ro
-            - /sys:/sys:ro
-            - /var/lib/docker/:/var/lib/docker:ro
-            - /dev/disk/:/dev/disk:ro
-        ports:
-            - '8081:8080'
-        networks:
-            - app-network
-
     ai-demo:
         build:
             context: .
@@ -312,6 +289,32 @@ services:
         networks:
             - app-network
         restart: always
+
+    api-gateway:
+        build:
+            context: .
+            dockerfile: gateway/Dockerfile
+        container_name: api-gateway
+        ports:
+            - '8210:8210'
+        env_file:
+            - ./gateway/.env
+        security_opt:
+            - no-new-privileges:true
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 5G
+                reservations:
+                    cpus: '2'
+                    memory: 2G
+        networks:
+            - app-network
 
 networks:
     app-network:

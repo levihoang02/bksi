@@ -25,7 +25,7 @@ router.post('/instance', checkJwt, serviceController.createNewInstanceAPI);
 router.delete('/instance', checkJwt, serviceController.deleteInstanceAPI);
 
 /*use service router */
-// router.use(validateAPIKeyMiddleware);
+router.use(validateAPIKeyMiddleware);
 router.post('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
 router.post('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
 

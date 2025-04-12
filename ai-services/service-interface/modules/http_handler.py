@@ -22,9 +22,9 @@ async def metrics():
 async def process_request(data: dict):
     """Sync request process"""
     try:
-        with PROCESS_TIME.time():  # Đo thời gian xử lý
+        with PROCESS_TIME.time():
             result, _ = process(data)
-        REQUEST_SUCCESS.inc()  # Tăng số request thành công
+        REQUEST_SUCCESS.inc()
         return {"status": "success", "result": result}
     except Exception as e:
         REQUEST_FAILURE.inc()

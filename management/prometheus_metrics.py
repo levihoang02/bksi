@@ -4,12 +4,12 @@ import threading
 import time
 
 # Request counters
-REQUEST_COUNT = Counter('report_request_total', 'Total number of requests', ['method', 'endpoint', 'status'])
-REQUEST_LATENCY = Histogram('report_request_latency_seconds', 'Request latency in seconds', ['method', 'endpoint'])
+REQUEST_COUNT = Counter('request_total', 'Total number of requests', ['method', 'endpoint', 'status'])
+REQUEST_LATENCY = Histogram('request_latency_seconds', 'Request latency in seconds', ['method', 'endpoint'])
 
 # System metrics
-SYSTEM_MEMORY = Gauge('report_memory_usage_bytes', 'Memory usage in bytes')
-SYSTEM_CPU = Gauge('report_cpu_usage_percent', 'CPU usage percentage')
+SYSTEM_MEMORY = Gauge('memory_usage_bytes', 'Memory usage in bytes')
+SYSTEM_CPU = Gauge('cpu_usage_percent', 'CPU usage percentage')
 
 def get_metrics():
     """Generate latest metrics in Prometheus format"""

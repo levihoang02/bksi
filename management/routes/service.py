@@ -22,22 +22,6 @@ def create_container():
         ports = request.form.getlist("port")
         endPoint = request.form.get("endPoint")
         replicas = int(request.form.get("replicas")) if request.form.get("replicas") else 1
-        process_file = request.files.get("process_file")
-        env_file = request.files.get("env_file")
-
-        if not process_file:
-            return jsonify({"error": "You must insert process.py file"}), 400
-        
-        if not env_file:
-             return jsonify({"error": "You must insert .env file"}), 400
-        
-        if not process_file.filename.endswith(".py") or not env_file.filename == ".env":
-            return jsonify({"error": "Invalid file type"}), 400
-        
-        if not has_process_function(process_file):
-            return jsonify({"error": "File does not contain a 'process(data)' function"}), 400
-
-        warnings = analyze_process_file(process_file)
 
         with session.begin():
             service = session.query(Service).filter_by(Sname=name).first()
@@ -45,18 +29,10 @@ def create_container():
                 service = Service(Sname= name)
                 session.add(service)
                 session.flush()
-                
-            process_file.save(SKELETON_PROCESSOR_PATH)
-            env_file.save(ENV_PATH)
-            zip_file_path = get_zip_file_path(name)
-            with open("skeleton/warnings.txt", "w") as f:
-                for line in warnings:
-                    f.write(f"{line}\n")
-            shutil.make_archive(zip_file_path.replace(".zip", ""), 'zip', "skeleton")
             
             for i in range(replicas):
                 new_instance = ServiceInstance(host= host, port= ports[i], endPoint= endPoint, 
-                                status= True, service_id= service.id, skeleton_path= zip_file_path)
+                                status= True, service_id= service.id, skeleton_path= None)
                 session.add(new_instance)
                 session.flush()
                 new_event = Event(
@@ -71,13 +47,9 @@ def create_container():
                 )
                 producer.send_event(topic='dashboard', event = new_event)
         
-            return send_file(
-                zip_file_path,
-                mimetype='application/zip',
-                as_attachment=True,
-                download_name=f"{service.Sname}.zip"
-            )
-
+            return jsonify({
+                "status": "success"
+            })
     except Exception as e:
         session.rollback()
         session.close()
@@ -90,9 +62,6 @@ def remove_service():
         id = request.form.get("id")
         with session.begin():
             service = session.query(Service).filter_by(id= id).first()
-            zip_file_path = get_zip_file_path(service.Sname)
-            if os.path.exists(zip_file_path):
-                os.remove(zip_file_path)
             instances = session.query(ServiceInstance).filter_by(service_id= id).all()
             session.query(ServiceInstance).filter_by(service_id= id).delete(synchronize_session='fetch')
             session.flush()
@@ -150,9 +119,6 @@ def create_new_instance():
         zip_file_path= ""
         with session.begin():
             service = session.query(Service).filter_by(id= id).first()
-            zip_file_path = get_zip_file_path(service.Sname)
-            if not os.path.exists(zip_file_path):
-                return {"error": "File not found"}, 404
             
             new_instance = ServiceInstance(host= host, port= port, endPoint= endPoint, 
                             status= True, service_id= service.id, skeleton_path= zip_file_path)
@@ -169,12 +135,9 @@ def create_new_instance():
                 )
             producer.send_event(topic='dashboard', event = new_event)
         
-        return send_file(
-            zip_file_path,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=f"{service.Sname}.zip"
-        )
+        return jsonify({
+            "status": "success"
+        })
     except Exception as e:
         session.rollback()
         session.close()

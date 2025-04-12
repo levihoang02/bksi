@@ -64,3 +64,7 @@ class MongoDBService:
     def close_connection(self):
         """Close the MongoDB connection."""
         self.client.close()
+        
+mongo = MongoDBService(host= config.MONGODB_HOST, port=config.MONGODB_PORT, 
+                       db_name= config.MONGODB_DATABASE, 
+                       username= config.DB_USERNAME, password= config.DB_PASSWORD)

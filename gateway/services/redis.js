@@ -1,73 +1,52 @@
 const redis = require('redis');
 
 let client = null;
-let redisAvailable = false;
-const RECONNECT_INTERVAL = 30000;
+// let redisAvailable = false;
+// const RECONNECT_INTERVAL = 30000;
 
-function setupRedisClient() {
-    if (client) {
-        // Clean up existing listeners and client
-        client.removeAllListeners();
-        client.quit().catch(() => {});
-    }
-
-    client = redis.createClient({
-        host: '127.0.0.1',
-        port: 6379,
-        retry_strategy: () => null,
+async function setupRedisClient() {
+    const host = process.env.REDIS_HOST || '127.0.0.1';
+    const port = process.env.REDIS_PORT || '6379';
+    const user = process.env.REDIS_USER;
+    const password = process.env.REDIS_PASSWORD;
+    const redisClient = redis.createClient({
+        url: `redis://${user}:${password}@${host}:${port}`,
     });
 
-    client.on('error', () => {
-        redisAvailable = false;
-        client.removeAllListeners();
-        client.quit().catch(() => {});
+    redisClient.on('error', (err) => {
+        console.log('Redis Client Error', err);
+        redisClient.removeAllListeners();
+        redisClient.quit().catch(() => {});
+        client = null;
+    });
+    redisClient.on('end', () => {
+        redisClient.removeAllListeners();
+        redisClient.quit().catch(() => {});
         client = null;
     });
 
-    client.on('end', () => {
-        redisAvailable = false;
-        client.removeAllListeners();
-        client.quit().catch(() => {});
-        client = null;
-    });
-
-    client.on('connect', () => {
+    redisClient.on('connect', () => {
         console.log('Redis connected');
-        redisAvailable = true;
     });
 
-    return client;
+    await redisClient.connect();
+    client = redisClient;
 }
 
 async function tryConnect() {
     try {
         if (!client) {
-            client = setupRedisClient();
-            console.log(client);
+            console.log('Trying to connect to redis...');
+            await setupRedisClient();
         }
-        if (client && !client.isOpen) {
-            await Promise.race([
-                client.connect(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000)),
-            ]);
-        }
-        return true;
     } catch (error) {
-        redisAvailable = false;
         return false;
     }
 }
 
-// Initial connection attempt
-setupRedisClient();
-
 async function initializeRedis() {
-    console.log('Initializing Redis...');
     try {
-        const connected = await tryConnect();
-        if (!connected) {
-            throw new Error('Failed to connect to Redis');
-        }
+        await setupRedisClient();
         console.log('Redis initialization complete');
         return true;
     } catch (error) {
@@ -77,20 +56,27 @@ async function initializeRedis() {
 }
 
 async function withRedisClient(operation) {
-    if (!redisAvailable || !client) {
-        await tryConnect();
-    }
-
+    await tryConnect();
     try {
         return await operation();
     } catch (error) {
         console.warn('Redis operation failed:', error.message);
-        redisAvailable = false; // Mark as unavailable on error
         return null;
     }
 }
 
 process.on('SIGINT', async () => {
+    try {
+        await client.quit();
+        console.log('Redis connection closed');
+    } catch (error) {
+        console.error('Error while closing Redis connection:', error);
+    } finally {
+        process.exit();
+    }
+});
+
+process.on('SIGTERM', async () => {
     try {
         await client.quit();
         console.log('Redis connection closed');
@@ -108,4 +94,8 @@ async function setWithExpiry(key, value, expirySeconds = 3600) {
     });
 }
 
-module.exports = { client, withRedisClient, setWithExpiry, initializeRedis };
+function getClient() {
+    return client;
+}
+
+module.exports = { getClient, withRedisClient, setWithExpiry, initializeRedis };
