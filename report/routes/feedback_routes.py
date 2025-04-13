@@ -10,12 +10,13 @@ feedback_service = FeedbackService(Config.MONGO_URI)
 def submit_feedback():
     try:
         data = request.json
-        feedback = Feedback(
-            service_name=data['service_name'],
-            feedback_type=data['feedback_type'],
-            value=data['value'],
-        )
-        feedback_service.save_feedback(feedback)
+        for d in data:
+            feedback = Feedback(
+                service_name=d['service_name'],
+                feedback_type=d['feedback_type'],
+                value=d['value'],
+            )
+            feedback_service.save_feedback(feedback)
         return jsonify({'message': 'Feedback received successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400

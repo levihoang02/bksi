@@ -4,6 +4,7 @@ from kafka_utils.producer import KafkaProducerService
 from utils.config import Config
 from helpers.html import decode_html
 from database.mongo import mongo
+from models.ticket import Ticket
 
 config = Config()
 
@@ -34,13 +35,8 @@ class InsertEventHandler(AbstractEventHandler):
                     op=EventType.CREATE,
                     payload= payload
                 )
-            data = {
-                "_id": new_data["id"],
-                "content":  raw_content,
-                "tags": [],
-                "summarize": None,
-                "ner": []
-            }
+            ticket = Ticket(id= new_data["id"], content= raw_content)
+            data = ticket.to_dict()
             mongo.insert_one(collection_name= 'tickets', data=data)
             producer.send_message('tickets', key=str(new_data["id"]), event= new_event)
             
@@ -52,7 +48,7 @@ class NerEventHandler(AbstractEventHandler):
 class SumEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         data = event.payload
-        mongo.update_one(collection_name= 'tickets', query= {'id': data['id']}, update_values= {'summarize': data['value']})
+        mongo.update_one(collection_name= 'tickets', query= {'id': data['id']}, update_values= {'summary': data['value']})
 
 class TagEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):

@@ -5,7 +5,7 @@ from database.mongo import mongo
 ticket_bp = Blueprint("ticket", __name__)
 
 @ticket_bp.route("/ticket<int:ticket_id>", methods=["GET"])
-def create_container(ticket_id):
+def get_ticket_by_id(ticket_id):
     try:
        ticket = mongo.find_one('tickets', {'id': ticket_id})
        return ticket if ticket else "Ticket not found", 404
