@@ -6,19 +6,6 @@ from utils.config import Config
 feedback_bp = Blueprint('feedback', __name__)
 feedback_service = FeedbackService(Config.MONGO_URI)
 
-@feedback_bp.route('/health', methods=['GET'])
-def health_check():
-    try:
-        return jsonify({
-            "status": "healthy",
-            "message": "Service is ready"
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "status": "unhealthy",
-            "error": str(e)
-        }), 500
-
 @feedback_bp.route('/feedback', methods=['POST'])
 def submit_feedback():
     try:

@@ -72,16 +72,21 @@ const createBulkInstances = async (instances) => {
 };
 
 const deleteService = asyncErrorHandler(async (req, res, next) => {
-    const id = req.body.id;
+    const name = req.params.name;
     try {
+        const service = await Service.findOne({
+            where: {
+                Sname: name,
+            },
+        });
         await ServiceInstance.destroy({
             where: {
-                serviceId: id,
+                serviceId: service.id,
             },
         });
         await Service.destroy({
             where: {
-                id: id,
+                Sname: name,
             },
         });
         res.status(200).json({ message: 'sucess' });
@@ -150,7 +155,7 @@ const createNewInstanceAPI = asyncErrorHandler(async (req, res, next) => {
 });
 
 const deleteInstanceAPI = asyncErrorHandler(async (req, res, next) => {
-    const id = req.body.id;
+    const id = req.params.id;
     try {
         await ServiceInstance.destroy({
             where: {

@@ -17,12 +17,12 @@ router.get('/key', checkJwt, (req, res, next) => authController.generateAPIToken
 
 // service route
 router.post('/service', checkJwt, serviceController.createNewServiceAPI);
-router.delete('/service', checkJwt, serviceController.deleteService);
+router.delete('/service/:name', checkJwt, serviceController.deleteService);
 router.get('/service', checkJwt, serviceController.getAllServiceAPI);
 router.get('/service/:name', checkJwt, serviceController.getServiceByNameAPI);
 
 router.post('/instance', checkJwt, serviceController.createNewInstanceAPI);
-router.delete('/instance', checkJwt, serviceController.deleteInstanceAPI);
+router.delete('/instance/:id', checkJwt, serviceController.deleteInstanceAPI);
 
 /*use service router */
 router.use(validateAPIKeyMiddleware);

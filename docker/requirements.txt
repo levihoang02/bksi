@@ -3,8 +3,4 @@ python-dotenv
 prometheus-client
 psutil
 gunicorn
-confluent-kafka
-Marshmallow
-pymongo
-retry
-bs4
+requests

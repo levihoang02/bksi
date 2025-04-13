@@ -33,7 +33,11 @@ def after_request(response):
 def metrics():
     return Response(get_metrics()[0], mimetype=get_metrics()[1])
 
-if __name__ == "__main__":
+def initialize_background_tasks():
     db.create_all()
     system_monitor.start()
-    app.run(host="0.0.0.0", port=3200)
+
+
+if __name__ == "__main__":
+    initialize_background_tasks()
+    app.run(host='0.0.0.0', port=3200, debug= True)

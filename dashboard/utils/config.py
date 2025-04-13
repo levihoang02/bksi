@@ -10,3 +10,4 @@ class Config:
     KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID")
     KAFKA_CONSUME_TOPIC = os.getenv("KAFKA_CONSUME_TOPIC")
     PROMETHEUS_HOST = os.getenv("PROMETHEUS_HOST")
+    MONGO_URI =  os.getenv('MONGO_URI')

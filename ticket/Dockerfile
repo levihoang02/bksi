@@ -1,18 +1,30 @@
-# Sử dụng Python base image
+# ---------- Stage 1: Build ----------
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY ticket/requirements.txt .
+RUN pip install --upgrade pip \
+    && pip install --prefix=/install -r requirements.txt
+
+# ---------- Stage 2: Production ----------
 FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy only the installed packages from the builder
+COPY --from=builder /install /usr/local
 
-COPY ticket /app
-
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ticket .
 
 EXPOSE 8080
 
-# Chạy ứng dụng Flask
-CMD ["python", "main.py"]
+# Command to run the Flask app via Gunicorn
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "main:app"]

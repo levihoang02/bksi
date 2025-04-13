@@ -38,7 +38,8 @@ def create_app():
 
 app = create_app()
 
-if __name__ == '__main__':
+def initialize_background_tasks():
     # Start the system metrics monitor before running the app
     system_monitor.start()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+initialize_background_tasks()

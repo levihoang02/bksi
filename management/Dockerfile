@@ -1,32 +1,30 @@
-FROM python:3.9-slim
-
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+# ---------- Stage 1: Build ----------
+FROM python:3.11-slim as builder
 
 WORKDIR /app
 
-# Copy requirements first to leverage Docker cache
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY management/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install --prefix=/install -r requirements.txt
 
-# Copy application code
-COPY management /app
+# ---------- Stage 2: Production ----------
+FROM python:3.11-slim
 
-# Set proper permissions
-RUN chown -R appuser:appuser /app
+WORKDIR /app
 
-RUN chown -R 1000:1000 skeleton/
-RUN chown -R 1000:1000 containers/
+# Copy only the installed packages from the builder
+COPY --from=builder /install /usr/local
 
-# Switch to non-root user
-USER appuser
+COPY management .
 
 EXPOSE 3200
 
+# Command to run the Flask app via Gunicorn
 CMD ["python", "main.py"]

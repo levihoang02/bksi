@@ -3,6 +3,9 @@ import requests
 from abc import ABC, abstractmethod
 from utils.config import Config
 from kafka_utils.event import Event, EventType
+from .prometheus import generate_dashboard_json_from_metrics
+from .grafana import create_or_update_dashboard_on_grafana
+from services.metric_service import metric_service
 
 config = Config()
 
@@ -28,6 +31,18 @@ def reload_prometheus():
     except requests.exceptions.RequestException as e:
         print(f"Failed to reload Prometheus: {e}")
 
+def create_dashboard(metric_names: list[str], job_name: str):
+    try:
+        print(f"Creating new dashboard for {job_name}...")
+
+        metrics = metric_service.get_metric_types(metric_names= metric_names)
+
+        dashboard_json = generate_dashboard_json_from_metrics(metrics= metrics, job_name= job_name)
+        
+        create_or_update_dashboard_on_grafana(dashboard_json)
+        print(f"Created new dashboard for {job_name}")
+    except Exception as e:
+        print(f"Failed to create new dashboard on grafana: {e}")
 class AbstractEventHandler(ABC):
     @abstractmethod
     def handle_event(self, event: Event):
@@ -54,7 +69,7 @@ class InsertEventHandler(AbstractEventHandler):
             print(f"Added new target: {target} for job: {data['job']}")
             
             reload_prometheus()
-            
+            create_dashboard(metric_names= data["metrics"], job_name=data['job'])
         except Exception as e:
             print(f"Error handling CREATE event: {e}")
 
@@ -93,7 +108,7 @@ class DeleteEventHandler(AbstractEventHandler):
             print(f"Current targets before deletion: {json.dumps(targets, indent=2)}")
             
             target_to_delete = f"{data['host']}:{data['port']}"
-            job_name = data['job']
+            job_name = data['name']
             
             updated_targets = []
             deleted = False
@@ -101,7 +116,7 @@ class DeleteEventHandler(AbstractEventHandler):
             for target in targets:
                 should_delete = False
             
-                if (target['labels']['job'] == job_name and 
+                if (target['labels']['name'] == job_name and 
                     target_to_delete in target['targets']):
                     should_delete = True
                 

@@ -5,3 +5,6 @@ uvicorn
 python-dotenv
 retry
 prometheus_client
+transformers
+psutil
+torch==2.1.0

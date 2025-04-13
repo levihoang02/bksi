@@ -95,9 +95,7 @@ def cleanup():
         elif data['confirmed']:
             del state[key]
 
-if __name__ == '__main__':
-    scheduler.init_app(app)
-    scheduler.start()
+scheduler.init_app(app)
+scheduler.start()
     
-    scheduler.add_job(id='cleanup_job', func=cleanup, trigger='interval', seconds=30)
-    app.run(host='0.0.0.0', port=8001)
+scheduler.add_job(id='cleanup_job', func=cleanup, trigger='interval', seconds=30)

@@ -1,6 +1,34 @@
 [
   {
-    "targets": ["my-app:9020"],
-    "labels": { "job": "my-app" }
+    "targets": [
+      "management-module:3200"
+    ],
+    "labels": {
+      "job": "management-module"
+    }
+  },
+  {
+    "targets": [
+      "ticket-service:8080"
+    ],
+    "labels": {
+      "job": "ticket-service"
+    }
+  },
+  {
+    "targets": [
+      "dashboard:8081"
+    ],
+    "labels": {
+      "job": "dashboard"
+    }
+  },
+  {
+    "targets": [
+      "report-service:5000"
+    ],
+    "labels": {
+      "job": "report-service"
+    }
   }
 ]

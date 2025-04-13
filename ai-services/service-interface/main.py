@@ -5,7 +5,7 @@ import signal
 from modules.http_handler import app
 from modules.MB_handler import EventHandlerService
 from utils.config import Config
-from modules.processor.process import process
+from modules.process import process
 
 config = Config()
 

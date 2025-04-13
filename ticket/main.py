@@ -53,12 +53,13 @@ def run_metrics_server():
 def run_kafka_consumer():
     message_consumer.consume_messages(process_func)
 
-if __name__ == "__main__":
+
+def initialize_background_tasks():
     print("Dashboard Service Start!")
-    
     system_monitor.start()
-    
+
     consumer_thread = threading.Thread(target=run_kafka_consumer)
+    consumer_thread.daemon = True
     consumer_thread.start()
     
-    app.run(host="0.0.0.0", port= int(config.PORT) if config.PORT else 8080)
+initialize_background_tasks()

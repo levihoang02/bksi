@@ -5,3 +5,5 @@ requests
 pydantic
 prometheus-client
 psutil
+gunicorn
+pymongo

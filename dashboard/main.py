@@ -4,7 +4,7 @@ import signal
 import sys
 import threading
 import time
-from flask import Flask, Response
+from flask import Flask, Response, request, jsonify
 from utils.config import Config
 from kafka_utils.consumer import KafkaConsumerService
 from kafka_utils.event import Event
@@ -12,6 +12,8 @@ from handlers.manage import EventProcessor
 from prometheus_metrics import (
     REQUEST_COUNT, REQUEST_LATENCY, get_metrics, system_monitor
 )
+from services.metric_service import metric_service
+from models.metric import Metric
 
 config = Config()
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
@@ -24,6 +26,23 @@ app = Flask(__name__)
 def metrics():
     return Response(get_metrics()[0], mimetype=get_metrics()[1])
 
+@app.route('/metric', methods=['POST'])
+def create_new_metric():
+    data = request.json
+    metric = Metric(
+        metric_name=data['metric_name'],
+        chart_type=data['chart_type'],
+        desc= data['desc']
+    )
+    metric_service.save_metric(metric= metric)
+    return jsonify({'message': 'Metric created successfully'}), 201
+
+@app.route('/metric/<name>', methods=['DELETE'])
+def delete_metric(name):
+    response = metric_service.delete_metric(name)
+    return response
+
+    
 def shutdown_handler(signal, frame):
     print("\nShutting down gracefully...")
     message_consumer._close()
@@ -47,7 +66,7 @@ def run_metrics_server():
 def run_kafka_consumer():
     message_consumer.consume_messages(process_func)
 
-if __name__ == "__main__":
+def initialize_background_tasks():
     print("Dashboard Service Start!")
     
     system_monitor.start()
@@ -55,4 +74,4 @@ if __name__ == "__main__":
     consumer_thread = threading.Thread(target=run_kafka_consumer)
     consumer_thread.start()
     
-    app.run(host="0.0.0.0", port=8081)
+initialize_background_tasks()
