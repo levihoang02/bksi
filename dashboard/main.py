@@ -12,8 +12,10 @@ from handlers.manage import EventProcessor
 from prometheus_metrics import (
     REQUEST_COUNT, REQUEST_LATENCY, get_metrics, system_monitor
 )
-from services.metric_service import metric_service
+from services.metric_service import metric_service, seed_metrics_from_json
 from models.metric import Metric
+
+METRICS_FILE_PATH = 'data/metrics.json'
 
 config = Config()
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
@@ -68,7 +70,7 @@ def run_kafka_consumer():
 
 def initialize_background_tasks():
     print("Dashboard Service Start!")
-    
+    seed_metrics_from_json(file_path= METRICS_FILE_PATH)
     system_monitor.start()
     
     consumer_thread = threading.Thread(target=run_kafka_consumer)

@@ -27,4 +27,4 @@ COPY management .
 EXPOSE 3200
 
 # Command to run the Flask app via Gunicorn
-CMD ["python", "main.py"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:3200", "main:app"]

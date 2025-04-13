@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from models.metric import Metric
+import json
 
 class MetricService:
     def __init__(self, mongo_uri, db_name, collection_name):
@@ -35,3 +36,28 @@ class MetricService:
 from utils.config import Config
 config = Config()
 metric_service = MetricService(config.MONGO_URI, 'metric_db', 'metrics')
+
+def seed_metrics_from_json(file_path: str):
+    try:
+        with open(file_path, 'r') as f:
+            metrics_data = json.load(f)
+
+        existing_metrics_cursor = metric_service.collection.find(
+            {}, {"_id": 0, "metric_name": 1}
+        )
+        existing_metric_names = {m["metric_name"] for m in existing_metrics_cursor}
+
+        new_metrics = [
+            item for item in metrics_data
+            if item["metric_name"] not in existing_metric_names
+        ]
+
+        for item in new_metrics:
+            metric = Metric(metric_name=item["metric_name"], chart_type=item["chart_type"])
+            metric_service.save_metric(metric)
+
+        print("Inserted new metrics to MongoDB.")
+
+    except Exception as e:
+        print(f"Failed to seed metrics: {e}")
+        

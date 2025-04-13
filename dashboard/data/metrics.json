@@ -1,0 +1,18 @@
+[
+  { "metric_name": "ai_request_total", "chart_type": "timeseries" },
+  { "metric_name": "ai_request_latency_seconds", "chart_type": "heatmap" },
+  { "metric_name": "model_inferences_total", "chart_type": "timeseries" },
+  { "metric_name": "model_inference_errors_total", "chart_type": "timeseries" },
+  { "metric_name": "model_response_time_seconds", "chart_type": "heatmap" },
+  { "metric_name": "model_batch_size", "chart_type": "barchart" },
+  { "metric_name": "model_input_data_size_bytes", "chart_type": "barchart" },
+  { "metric_name": "model_output_data_size_bytes", "chart_type": "barchart" },
+  { "metric_name": "model_input_tokens_total", "chart_type": "barchart" },
+  { "metric_name": "model_output_tokens_total", "chart_type": "barchart" },
+  { "metric_name": "ai_model_accuracy", "chart_type": "gauge" },
+  { "metric_name": "ai_model_loss", "chart_type": "gauge" },
+  { "metric_name": "ai_memory_usage_bytes", "chart_type": "gauge" },
+  { "metric_name": "ai_cpu_usage_percent", "chart_type": "gauge" },
+  { "metric_name": "ai_gpu_memory_usage_bytes", "chart_type": "gauge" },
+  { "metric_name": "ai_gpu_utilization_percent", "chart_type": "gauge" }
+]

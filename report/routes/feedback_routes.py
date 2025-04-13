@@ -14,18 +14,16 @@ def submit_feedback():
             service_name=data['service_name'],
             feedback_type=data['feedback_type'],
             value=data['value'],
-            suggestion=data.get('suggestion')
         )
         feedback_service.save_feedback(feedback)
-        return jsonify({'message': 'Feedback received successfully'}), 201
+        return jsonify({'message': 'Feedback received successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
 @feedback_bp.route('/metrics/<service_name>', methods=['GET'])
 def get_metrics(service_name):
     try:
-        days = request.args.get('days', default=7, type=int)
-        metrics = feedback_service.get_metrics(service_name, days)
+        metrics = feedback_service.get_metrics(service_name)
         return jsonify(metrics)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
@@ -33,8 +31,7 @@ def get_metrics(service_name):
 @feedback_bp.route('/suggestions/<service_name>', methods=['GET'])
 def get_suggestions(service_name):
     try:
-        limit = request.args.get('limit', default=10, type=int)
-        suggestions = feedback_service.get_suggestions(service_name, limit)
+        suggestions = feedback_service.get_suggestions(service_name)
         return jsonify(suggestions)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
