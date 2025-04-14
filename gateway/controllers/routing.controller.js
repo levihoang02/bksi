@@ -1,4 +1,5 @@
 const httpProxy = require('express-http-proxy');
+const CircuitBreaker = require('opossum');
 const asyncErrorHandler = require('../services/errorHandling');
 const CustomError = require('../utils/CustomError');
 const { findServiceInstanceEndPoint } = require('../controllers/service.controller');
@@ -9,6 +10,56 @@ const {
     storeInstances,
 } = require('../services/loadbalancing');
 require('dotenv').config();
+
+async function proxyServiceRequest(req, res, serviceInstance, endPoint, instanceKey, proxyEndpoint) {
+    return new Promise((resolve, reject) => {
+        let path = `http://${serviceInstance.host}:${serviceInstance.port}`;
+        if (proxyEndpoint) {
+            path = `${path}/${proxyEndpoint.replace(/^\/+|\/+$/g, '')}`;
+        }
+
+        const proxyMiddleware = httpProxy(path, {
+            proxyTimeout: 10000,
+            timeout: 10000,
+            proxyReqPathResolver: function (req) {
+                const originalPath = req.url;
+                const newPath = originalPath.replace(`/route/${endPoint}`, '');
+                return newPath || '/';
+            },
+        });
+
+        res.on('finish', () => {
+            resolve();
+        });
+
+        proxyMiddleware(req, res, (proxyError) => {
+            if (proxyError) {
+                console.error('Proxy error:', {
+                    service: endPoint,
+                    instance: instanceKey,
+                    error: proxyError.message,
+                    code: proxyError.code,
+                });
+                reject(proxyError);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+const breakerOptions = {
+    timeout: 30000,
+    errorThresholdPercentage: 50, // % of failures before opening the circuit
+    resetTimeout: 30000,
+};
+
+const proxyBreaker = new CircuitBreaker(proxyServiceRequest, breakerOptions);
+
+// Fallback if service is unavailable
+proxyBreaker.fallback(() => {
+    throw new CustomError('Circuit breaker: service temporarily unavailable', 503);
+});
 
 const useService = asyncErrorHandler(async (req, res, next) => {
     const endPoint = req.params.endPoint;
@@ -34,51 +85,51 @@ const useService = asyncErrorHandler(async (req, res, next) => {
         // Increment active connection count
         await incrementConnection(endPoint, instanceKey);
 
-        // Construct the proxy path
-        let path = `http://${serviceInstance.host}:${serviceInstance.port}`;
-        if (proxyEndpoint) {
-            path = `${path}/${proxyEndpoint.replace(/^\/+|\/+$/g, '')}`;
-        }
-        console.log(`Proxying request to: ${path}`);
+        // // Construct the proxy path
+        // let path = `http://${serviceInstance.host}:${serviceInstance.port}`;
+        // if (proxyEndpoint) {
+        //     path = `${path}/${proxyEndpoint.replace(/^\/+|\/+$/g, '')}`;
+        // }
+        // console.log(`Proxying request to: ${path}`);
 
         // Proxy the request
-        const proxyRequest = new Promise((resolve, reject) => {
-            const proxyMiddleware = httpProxy(path, {
-                proxyTimeout: 10000,
-                timeout: 10000,
-                proxyReqPathResolver: function (req) {
-                    const originalPath = req.url;
-                    const newPath = originalPath.replace(`/route/${endPoint}`, '');
-                    return newPath || '/';
-                },
-            });
+        // const proxyRequest = new Promise((resolve, reject) => {
+        //     const proxyMiddleware = httpProxy(path, {
+        //         proxyTimeout: 10000,
+        //         timeout: 10000,
+        //         proxyReqPathResolver: function (req) {
+        //             const originalPath = req.url;
+        //             const newPath = originalPath.replace(`/route/${endPoint}`, '');
+        //             return newPath || '/';
+        //         },
+        //     });
 
-            res.on('finish', () => {
-                resolve();
-            });
+        //     res.on('finish', () => {
+        //         resolve();
+        //     });
 
-            proxyMiddleware(req, res, (proxyError) => {
-                if (proxyError) {
-                    console.error('Proxy error:', {
-                        service: endPoint,
-                        instance: instanceKey,
-                        error: proxyError.message,
-                        code: proxyError.code,
-                    });
-                    reject(proxyError);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        //     proxyMiddleware(req, res, (proxyError) => {
+        //         if (proxyError) {
+        //             console.error('Proxy error:', {
+        //                 service: endPoint,
+        //                 instance: instanceKey,
+        //                 error: proxyError.message,
+        //                 code: proxyError.code,
+        //             });
+        //             reject(proxyError);
+        //         } else {
+        //             resolve();
+        //         }
+        //     });
+        // });
 
-        await proxyRequest;
+        // await proxyRequest;
+        await proxyBreaker.fire(req, res, serviceInstance, endPoint, instanceKey, proxyEndpoint);
 
         // console.log(instanceKey);
     } catch (err) {
         // console.error(`Error in useService: ${err.message}`);
-        const error = new CustomError('Routing error', 500);
-        next(error);
+        next(err instanceof CustomError ? err : new CustomError(`Routing error ${err.message}`, 500));
     } finally {
         // console.log(instanceKey);
         if (instanceKey) {

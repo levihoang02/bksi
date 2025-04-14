@@ -25,20 +25,39 @@ router.post('/instance', checkJwt, serviceController.createNewInstanceAPI);
 router.delete('/instance/:id', checkJwt, serviceController.deleteInstanceAPI);
 
 /*use service router */
-router.use(validateAPIKeyMiddleware);
-router.post('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
-router.post('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+router.post('/route/:endPoint/*', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
+router.post('/route/:endPoint', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
 
-router.get('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
-router.get('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+router.get('/route/:endPoint/*', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
+router.get('/route/:endPoint', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
 
-router.delete('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
-router.delete('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+router.delete('/route/:endPoint/*', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
+router.delete('/route/:endPoint', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
 
-router.put('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
-router.put('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+router.put('/route/:endPoint/*', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
+router.put('/route/:endPoint', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
 
-router.patch('/route/:endPoint/*', (req, res, next) => routingController.useService(req, res, next));
-router.patch('/route/:endPoint', (req, res, next) => routingController.useService(req, res, next));
+router.patch('/route/:endPoint/*', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
+router.patch('/route/:endPoint', validateAPIKeyMiddleware, (req, res, next) =>
+    routingController.useService(req, res, next),
+);
 
 module.exports = router;

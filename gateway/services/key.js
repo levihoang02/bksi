@@ -1,4 +1,4 @@
-const { client, withRedisClient, setWithExpiry } = require('./redis');
+const { getClient, withRedisClient, setWithExpiry } = require('./redis');
 const { hash } = require('../helpers/crypto');
 
 const KEY_PREFIX = {
@@ -13,6 +13,7 @@ async function storeApiKey(hashKey, metadata = {}, expirySeconds = 24 * 3600) {
     // console.log('Storing...');
 
     await withRedisClient(async () => {
+        const client = getClient();
         const formatHashKey = formatApiKey(hashKey);
         await client.hSet(formatHashKey, {
             created: Date.now().toString(),
@@ -23,6 +24,7 @@ async function storeApiKey(hashKey, metadata = {}, expirySeconds = 24 * 3600) {
 }
 
 async function validateApiKey(apiKey) {
+    const client = getClient();
     const hashKey = hash(apiKey);
     const data =
         (await withRedisClient(async () => {
