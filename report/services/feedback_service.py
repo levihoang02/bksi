@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 from models.feedback import Feedback
 
 class FeedbackService:
-    def __init__(self, mongo_uri):
+    def __init__(self, mongo_uri, db_name, collection_name):
         self.client = MongoClient(mongo_uri)
-        self.db = self.client.feedback_db
-        self.collection = self.db.feedbacks
+        self.db_name = db_name
+        self.db = self.client[self.db_name]
+        self.collection_name = collection_name
+        self.collection = self.db[self.collection_name]
 
     def save_feedback(self, feedback: Feedback):
         return self.collection.insert_one(feedback.to_dict())

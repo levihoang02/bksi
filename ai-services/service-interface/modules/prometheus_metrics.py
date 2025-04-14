@@ -3,6 +3,16 @@ import time
 import threading
 import psutil
 import os
+import sys
+
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    NVML_AVAILABLE = True
+    GPU_HANDLE = pynvml.nvmlDeviceGetHandleByIndex(0)
+except Exception:
+    NVML_AVAILABLE = False
+    GPU_HANDLE = None
 
 # ------------------- METRICS DEFINITIONS ------------------- #
 
@@ -30,12 +40,14 @@ CPU_USAGE = Gauge('ai_cpu_usage_percent', 'CPU usage percentage')
 GPU_MEMORY_USAGE = Gauge('ai_gpu_memory_usage_bytes', 'GPU memory usage in bytes')
 GPU_UTILIZATION = Gauge('ai_gpu_utilization_percent', 'GPU utilization percentage')
 
+
 # ------------------- SYSTEM MONITOR ------------------- #
 
 class SystemMonitor:
     def __init__(self, interval=5):
         self.interval = interval
         self.process = psutil.Process(os.getpid())
+        self.process.cpu_percent(interval=None)  # Prime CPU measurement
         self._stop_event = threading.Event()
         self.thread = threading.Thread(target=self._run, daemon=True)
 
@@ -52,19 +64,14 @@ class SystemMonitor:
                 MEMORY_USAGE.set(self.process.memory_info().rss)
                 CPU_USAGE.set(self.process.cpu_percent())
 
-                try:
-                    import pynvml
-                    pynvml.nvmlInit()
-                    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-                    mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                if NVML_AVAILABLE:
+                    mem = pynvml.nvmlDeviceGetMemoryInfo(GPU_HANDLE)
                     GPU_MEMORY_USAGE.set(mem.used)
-                    GPU_UTILIZATION.set(pynvml.nvmlDeviceGetUtilizationRates(handle).gpu)
-                except Exception:
-                    pass
+                    GPU_UTILIZATION.set(pynvml.nvmlDeviceGetUtilizationRates(GPU_HANDLE).gpu)
             except Exception as e:
                 print(f"Error collecting system metrics: {e}")
-
             time.sleep(self.interval)
+
 
 # ------------------- DECORATORS ------------------- #
 
@@ -85,6 +92,7 @@ def monitor_request(method, endpoint):
                 REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(latency_seconds)
         return wrapper
     return decorator
+
 
 def monitor_model_inference():
     def decorator(func):
@@ -113,7 +121,6 @@ def monitor_model_inference():
         return wrapper
     return decorator
 
-# tokenizer = a function to tokenize input (For excample tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased") or a custom one)
 
 def monitor_model_tokens(tokenizer):
     def decorator(func):
@@ -122,7 +129,9 @@ def monitor_model_tokens(tokenizer):
 
             try:
                 input_tokens = tokenizer(input_data)
-                INPUT_TOKENS.observe(len(input_tokens))
+                token_count = _extract_token_count(input_tokens)
+                if token_count:
+                    INPUT_TOKENS.observe(token_count)
             except Exception:
                 pass
 
@@ -130,7 +139,9 @@ def monitor_model_tokens(tokenizer):
                 output = func(*args, **kwargs)
                 try:
                     output_tokens = tokenizer(output)
-                    OUTPUT_TOKENS.observe(len(output_tokens))
+                    token_count = _extract_token_count(output_tokens)
+                    if token_count:
+                        OUTPUT_TOKENS.observe(token_count)
                 except Exception:
                     pass
                 return output
@@ -138,6 +149,7 @@ def monitor_model_tokens(tokenizer):
                 raise e
         return wrapper
     return decorator
+
 
 def track_model_accuracy():
     def decorator(func):
@@ -166,21 +178,22 @@ def track_model_loss():
         return wrapper
     return decorator
 
+
 # ------------------- HELPERS ------------------- #
 
 def _estimate_size(data):
-    import sys
     try:
         return sys.getsizeof(data)
     except Exception:
         return 0
 
+def _extract_token_count(tokenized_output):
+    if isinstance(tokenized_output, dict):
+        if 'input_ids' in tokenized_output:
+            return len(tokenized_output['input_ids'])
+    elif hasattr(tokenized_output, '__len__'):
+        return len(tokenized_output)
+    return None
+
 def get_prometheus_metrics():
     return generate_latest(), CONTENT_TYPE_LATEST
-
-# ------------------- Suggest order when call multiple decorator for one function ------------------- #
-# @monitor_request(method="POST", endpoint="/predict")
-# @track_model_accuracy()
-# @track_model_loss()
-# @monitor_model_inference()
-# @monitor_model_tokens(tokenizer)

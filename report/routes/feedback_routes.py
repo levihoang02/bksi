@@ -4,7 +4,7 @@ from models.feedback import Feedback
 from utils.config import Config
 
 feedback_bp = Blueprint('feedback', __name__)
-feedback_service = FeedbackService(Config.MONGO_URI)
+feedback_service = FeedbackService(Config.MONGO_URI, Config.MONGO_DB_NAME, Config.MONGO_COLLECTION_NAME)
 
 @feedback_bp.route('/feedback', methods=['POST'])
 def submit_feedback():
