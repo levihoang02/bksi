@@ -3,10 +3,10 @@ print("=== SERVICE STARTING ===")
 import signal
 import sys
 import threading
-import time
 from flask import Flask, Response, request, jsonify
 from utils.config import Config
 from kafka_utils.consumer import KafkaConsumerService
+from kafka_utils.dlq_consumer import DLQConsumer
 from kafka_utils.event import Event
 from handlers.manage import EventProcessor
 from prometheus_metrics import (
@@ -19,6 +19,7 @@ METRICS_FILE_PATH = 'data/metrics.json'
 
 config = Config()
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
+dlq_consumer = DLQConsumer(config.DLQ_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 processor = EventProcessor()
 
 # Create Flask app for metrics
@@ -67,6 +68,9 @@ def run_metrics_server():
     
 def run_kafka_consumer():
     message_consumer.consume_messages(process_func)
+    
+def run_dlq_consumer():
+    dlq_consumer.consume_dlq(process_func)
 
 def initialize_background_tasks():
     print("Dashboard Service Start!")
@@ -75,5 +79,8 @@ def initialize_background_tasks():
     
     consumer_thread = threading.Thread(target=run_kafka_consumer)
     consumer_thread.start()
+    
+    dlq_thread = threading.Thread(target= run_dlq_consumer)
+    dlq_thread.start()
     
 initialize_background_tasks()

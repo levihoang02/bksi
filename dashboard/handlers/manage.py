@@ -6,6 +6,7 @@ from kafka_utils.event import Event, EventType
 from .prometheus import generate_dashboard_json_from_metrics
 from .grafana import create_or_update_dashboard_on_grafana
 from services.metric_service import metric_service
+from kafka_utils.producer import producer, send_to_dlq
 
 config = Config()
 
@@ -157,5 +158,6 @@ class EventProcessor:
                 print(f"Successfully processed {event.op} event")
             except Exception as e:
                 print(f"Error processing event: {e}")
+                send_to_dlq(event= event, error_message= e)
         else:
             print(f"[UNKNOWN] Event received: {event}")

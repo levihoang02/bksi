@@ -11,3 +11,4 @@ class Config:
     KAFKA_CONSUME_TOPIC = os.getenv("KAFKA_CONSUME_TOPIC")
     PROMETHEUS_HOST = os.getenv("PROMETHEUS_HOST")
     MONGO_URI =  os.getenv('MONGO_URI')
+    DLQ_TOPIC = os.getenv('DLQ_TOPIC')

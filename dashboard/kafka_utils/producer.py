@@ -38,8 +38,20 @@ load_dotenv()
 
 producer = KafkaProducerService({
     'bootstrap.servers': os.getenv("KAFKA_BROKERS_INTERNAL"),
-    'client.id': "management_service",
+    'client.id': "dashboard_service",
     'acks': 'all',
     'retries': 3,
     'retry.backoff.ms': 100,
 })
+
+import datetime
+def send_to_dlq(event, error_message, retry_count=0):
+    dlq_payload = {
+        "original_event": event.to_dict(),
+        "error_message": str(error_message),
+        "timestamp": datetime.utcnow().isoformat(),
+        "retry_count": retry_count + 1,
+    }
+    producer.produce("dashboard-dlq", json.dumps(dlq_payload).encode("utf-8"))
+    producer.flush()
+    print(f"[DLQ] Event sent to DLQ due to error: {error_message}")

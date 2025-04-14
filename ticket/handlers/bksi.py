@@ -1,20 +1,12 @@
 from abc import ABC, abstractmethod
 from kafka_utils.event import Event, EventType
-from kafka_utils.producer import KafkaProducerService
+from kafka_utils.producer import producer, send_to_dlq
 from utils.config import Config
 from helpers.html import decode_html
 from database.mongo import mongo
 from models.ticket import Ticket
 
 config = Config()
-
-producer_config = {
-        "bootstrap.servers": config.KAFKA_BROKERS_INTERNAL,
-        "client.id": "ticket-producer",
-        "acks": "all"
-}
-
-producer = KafkaProducerService(producer_config)
 
 class AbstractEventHandler(ABC):
     @abstractmethod
@@ -86,5 +78,6 @@ class EventProcessor:
                 print(f"Successfully processed {event.op} event")
             except Exception as e:
                 print(f"Error processing event: {e}")
+                send_to_dlq(event= event, error_message= e)
         else:
             print(f"[UNKNOWN] Event received: {event}")

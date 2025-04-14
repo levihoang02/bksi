@@ -127,6 +127,18 @@ services:
         user: root
         env_file:
             - ./healthcheck/.env
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
         networks:
             - app-network
     dashboard:
@@ -148,6 +160,18 @@ services:
             - kafka-2
             - kafka-3
             - mongodb
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 3G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
         networks:
             - app-network
 
@@ -235,17 +259,17 @@ services:
                     memory: 2G
         networks:
             - app-network
-    ai-demo:
-        build:
-            context: .
-            dockerfile: ai-services/service-interface/Dockerfile
-        container_name: AI-demo
-        env_file:
-            - ./ai-services/service-interface/.env
-        ports:
-            - '8120:8120'
-        networks:
-            - app-network
+    # ai-demo:
+    #     build:
+    #         context: .
+    #         dockerfile: ai-services/service-interface/Dockerfile
+    #     container_name: AI-demo
+    #     env_file:
+    #         - ./ai-services/service-interface/.env
+    #     ports:
+    #         - '8120:8120'
+    #     networks:
+    #         - app-network
     management-module:
         build:
             context: .
@@ -293,6 +317,18 @@ services:
             - FLASK_APP=main.py
         depends_on:
             - mongodb
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
         networks:
             - app-network
         restart: always

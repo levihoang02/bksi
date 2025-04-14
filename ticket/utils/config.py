@@ -16,3 +16,4 @@ class Config:
     DB_USERNAME = os.getenv("DB_USERNAME")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     PORT = os.getenv("PORT")
+    DLQ_TOPIC = os.getenv("DLQ_TOPIC")

@@ -7,6 +7,7 @@ import time
 from flask import Flask, Response
 from utils.config import Config
 from kafka_utils.consumer import KafkaConsumerService
+from kafka_utils.dlq_consumer import DLQConsumer
 from kafka_utils.event import Event
 from handlers.bksi import EventProcessor
 from prometheus_metrics import (
@@ -17,6 +18,7 @@ from routes.ticket import ticket_bp
 
 config = Config()
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
+dlq_consumer = DLQConsumer(config.DLQ_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 processor = EventProcessor()
 
 # Create Flask app for metrics
@@ -38,7 +40,6 @@ signal.signal(signal.SIGINT, shutdown_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)
 
 def process_func(msg_data):
-    start_time = time.time()
     try:
         event = Event.from_dict(msg_data)
         processor.process_event(event)
@@ -52,6 +53,9 @@ def run_metrics_server():
     
 def run_kafka_consumer():
     message_consumer.consume_messages(process_func)
+    
+def run_dlq_consumer():
+    dlq_consumer.consume_dlq(process_func)
 
 
 def initialize_background_tasks():
@@ -59,6 +63,10 @@ def initialize_background_tasks():
     system_monitor.start()
 
     consumer_thread = threading.Thread(target=run_kafka_consumer)
+    consumer_thread.daemon = True
+    consumer_thread.start()
+    
+    consumer_thread = threading.Thread(target=run_dlq_consumer)
     consumer_thread.daemon = True
     consumer_thread.start()
     
