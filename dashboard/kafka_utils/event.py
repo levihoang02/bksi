@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 from typing import Dict, Any
 from dataclasses import dataclass, field
@@ -13,7 +13,7 @@ class EventType(Enum):
     ERROR = "ERROR"
 
 def generate_event_id() -> int:
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_part = random.randint(1000, 9999)
     return int(f"{timestamp}{random_part}")
 
@@ -23,7 +23,7 @@ class Event:
     op: EventType
     payload: Dict[str, Any]
     id: int = field(default_factory=generate_event_id)
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     version: str = field(default="1.0")
 
     def to_dict(self) -> Dict[str, Any]:

@@ -2,7 +2,6 @@ from confluent_kafka import Producer
 import json
 from abc import ABC, abstractmethod
 from .event import Event
-
 class AbstractProducer(ABC):
     @abstractmethod
     def send_event(self, topic: str, key: str, message: str):
@@ -23,7 +22,7 @@ class KafkaProducerService(AbstractProducer):
             
             self.producer.produce(
                 topic,
-                key=key.encode("utf-8"),
+                key=key.encode("utf-8") if key else None,
                 value=json.dumps(event_dict).encode("utf-8"),
                 callback=self.delivery_report
             )
@@ -44,12 +43,13 @@ producer = KafkaProducerService({
     'retry.backoff.ms': 100,
 })
 
-import datetime
+from datetime import datetime, timezone
+
 def send_to_dlq(event, error_message, retry_count=0):
     dlq_payload = {
         "original_event": event.to_dict(),
         "error_message": str(error_message),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "retry_count": retry_count + 1,
     }
     producer.produce("dashboard-dlq", json.dumps(dlq_payload).encode("utf-8"))

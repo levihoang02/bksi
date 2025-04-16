@@ -31,7 +31,7 @@ class InsertEventHandler(AbstractEventHandler):
             ticket = Ticket(id= payload.get("id"), content= raw_content)
             data = ticket.to_dict()
             mongo.insert_one(collection_name= 'tickets', data=data)
-            producer.send_event('tickets', key=str(new_data["id"]), event= new_event)
+            producer.send_event('tickets', event= new_event)
             
 class NerEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):

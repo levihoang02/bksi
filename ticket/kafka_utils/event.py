@@ -13,7 +13,7 @@ class EventType(Enum):
     TAG = "TAG"
 
 def generate_event_id() -> int:
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     random_part = random.randint(1000, 9999)
     return int(f"{timestamp}{random_part}")
 
