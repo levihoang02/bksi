@@ -18,6 +18,7 @@ class KafkaConsumerService:
         if isinstance(topics, list):
             self.consumer.subscribe(self.topic)
         self.consumer.subscribe([self.topic])
+        print(f"Consumer subribe to topic(s): {self.topic}")
 
     def consume_messages(self, process_function):
         """ Continuously consume messages and apply a processing function """

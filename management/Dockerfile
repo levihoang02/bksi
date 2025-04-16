@@ -21,7 +21,7 @@ WORKDIR /app
 
 # Copy only the installed packages from the builder
 COPY --from=builder /install /usr/local
-
+ENV PYTHONUNBUFFERED=1
 COPY management .
 
 EXPOSE 3200

@@ -21,7 +21,7 @@ WORKDIR /app
 
 # Copy installed Python packages from builder
 COPY --from=builder /install /usr/local
-
+ENV PYTHONUNBUFFERED=1
 # Copy service code
 COPY dashboard /app
 
