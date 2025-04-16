@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-
+from typing import List
 load_dotenv()
 
 class Config:
@@ -16,11 +16,10 @@ class Config:
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     PORT = os.getenv("PORT")
     DLQ_TOPIC = os.getenv("DLQ_TOPIC")
-
+    KAFKA_CONSUME_TOPIC = None
     @classmethod
     def get_kafka_topics(cls):
         topics_raw = os.getenv("KAFKA_CONSUME_TOPIC", "")
-        topics = [t.strip() for t in topics_raw.split(",") if t.strip()]
-        return topics[0] if len(topics) == 1 else topics
+        return [t.strip() for t in topics_raw.split(",") if t.strip()]
 
-    KAFKA_CONSUME_TOPIC = get_kafka_topics.__func__()
+Config.KAFKA_CONSUME_TOPIC = Config.get_kafka_topics()
