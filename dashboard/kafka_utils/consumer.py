@@ -35,8 +35,12 @@ class KafkaConsumerService:
                     message_data = json.loads(message_str)
                     print(message_data)
                     # Process the parsed message using the provided function
-                    process_function(message_data)
-                    self.consumer.commit(msg)
+                    try:
+                        process_function(message_data)
+                    except Exception as e:
+                        continue
+                    finally:
+                        self.consumer.commit(msg)
                 except json.JSONDecodeError as e:
                     print(f"Error decoding JSON: {e}")
                     continue

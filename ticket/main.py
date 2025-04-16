@@ -54,7 +54,6 @@ def process_func(msg_data: Dict[str, Any]):
 
     except Exception as e:
         print(f"Error processing event: {e}")
-        raise e
     finally:
         pass
 

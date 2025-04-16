@@ -59,7 +59,7 @@ def process_func(msg_data):
         event = Event.from_dict(msg_data)
         processor.process_event(event)
     except Exception as e:
-        raise
+        print(e)
     finally:
         pass
 
