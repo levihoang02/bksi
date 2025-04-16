@@ -3,7 +3,7 @@ print("=== SERVICE STARTING ===")
 import signal
 import sys
 import threading
-import time
+from typing import Dict, Any
 from flask import Flask, Response
 from utils.config import Config
 from kafka_utils.consumer import KafkaConsumerService
