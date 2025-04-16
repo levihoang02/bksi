@@ -65,15 +65,15 @@ def debezium_to_event(debezium_msg: Dict[str, Any]) -> Event:
         if op_type == "c":
             payload = debezium_msg.get('after', {})
             op = EventType.CREATE
-        elif op_type == "u":
-            payload = debezium_msg.get('after', {})
-            op = EventType.UPDATE
+        # elif op_type == "u":
+        #     payload = debezium_msg.get('after', {})
+        #     op = EventType.UPDATE
         elif op_type == "d":
             payload = debezium_msg.get('before', {})  # <- use before for deletes
             op = EventType.DELETE
         else:
-            raise ValueError(f"Unsupported Debezium operation type: {op_type}")
-
+            print(f"Skipping unsupported Debezium operation type: {op_type}")
+            pass
         return Event(
             source=source,
             op=op,
