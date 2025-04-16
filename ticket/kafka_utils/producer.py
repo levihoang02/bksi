@@ -24,7 +24,6 @@ class KafkaProducerService(AbstractProducer):
                 topic,
                 key=key.encode("utf-8") if key else None,
                 value=json.dumps(event_dict).encode("utf-8"),
-                callback=self.delivery_report
             )
             
         except Exception as e:
