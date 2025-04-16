@@ -2,6 +2,7 @@ const asyncErrorHandler = require('../services/errorHandling');
 const CustomError = require('../utils/CustomError');
 const { Service, ServiceInstance } = require('../models');
 const sequelize = require('../services/database');
+const { deleteInstanceFromRedis, deleteServiceFromRedis } = require('../services/loadbalancing');
 
 require('dotenv').config();
 
@@ -89,6 +90,7 @@ const deleteService = asyncErrorHandler(async (req, res, next) => {
                 Sname: name,
             },
         });
+        await deleteServiceFromRedis(service.endPoint);
         res.status(200).json({ message: 'sucess' });
     } catch (err) {
         const error = new CustomError('failed to delete service', 500);
@@ -157,12 +159,22 @@ const createNewInstanceAPI = asyncErrorHandler(async (req, res, next) => {
 const deleteInstanceAPI = asyncErrorHandler(async (req, res, next) => {
     const id = req.params.id;
     try {
+        const instance = await ServiceInstance.findOne({
+            where: {
+                id: id,
+            },
+        });
+        const service = await Service.findOne({
+            where: {
+                id: instance.ServiceId,
+            },
+        });
         await ServiceInstance.destroy({
             where: {
                 id: id,
             },
         });
-
+        await deleteInstanceFromRedis(service.endPoint, instance.id);
         res.status(200).json({ message: 'success' });
     } catch (err) {
         const error = new CustomError(`Failed to delete instance, ${err.message}`, 500);

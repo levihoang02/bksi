@@ -14,7 +14,7 @@
         {"name":"Report",  "endPoint": "report", "instances": [
           {
             "id": "Report1",
-            "host":"report", 
+            "host":"report-service", 
             "port": 5000
           }
         ]},
@@ -23,6 +23,13 @@
             "id": "Manage1",
             "host":"manage", 
             "port": 3200
+          }
+        ]},
+        {"name":"Ticket",  "endPoint": "ticket", "instances": [
+          {
+            "id": "ticket1",
+            "host":"ticket-service", 
+            "port": 8080
           }
         ]}
     ],

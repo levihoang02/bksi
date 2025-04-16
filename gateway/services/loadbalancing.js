@@ -81,4 +81,46 @@ async function decrementConnection(endPoint, instanceId) {
     });
 }
 
-module.exports = { storeInstances, incrementConnection, decrementConnection, getLeastConnectionsInstance };
+async function deleteServiceFromRedis(endPoint) {
+    return withRedisClient(async () => {
+        const client = getClient();
+        const multi = client.multi();
+
+        // Remove the sorted set for the given endpoint
+        multi.del(`${endPoint}:connections`);
+
+        const instanceKeys = await client.zRange(`${endPoint}:connections`, 0, -1);
+        if (instanceKeys.length > 0) {
+            // Delete each instance hash
+            instanceKeys.forEach((instanceKey) => {
+                multi.del(instanceKey); // Deleting the instance data from Redis
+            });
+        }
+
+        return await multi.exec();
+    });
+}
+
+async function deleteInstanceFromRedis(endPoint, instanceId) {
+    return withRedisClient(async () => {
+        const client = getClient();
+        const multi = client.multi();
+
+        const instanceKey = `${endPoint}:instances:${instanceId}`;
+
+        multi.zRem(`${endPoint}:connections`, instanceKey);
+
+        multi.del(instanceKey);
+
+        return await multi.exec();
+    });
+}
+
+module.exports = {
+    storeInstances,
+    incrementConnection,
+    decrementConnection,
+    getLeastConnectionsInstance,
+    deleteInstanceFromRedis,
+    deleteServiceFromRedis,
+};
