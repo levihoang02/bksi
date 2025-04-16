@@ -36,22 +36,26 @@ class InsertEventHandler(AbstractEventHandler):
 class NerEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         data = event.to_dict()
-        mongo.update_one(collection_name= 'tickets', query= {'id': data.get('id')}, update_values= {'ner': data.get('value')})
+        payload = data.get("payload")
+        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'ner': payload.get('value')})
         
 class SumEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
-        data = event.payload
-        mongo.update_one(collection_name= 'tickets', query= {'id': data.get('id')}, update_values= {'summary': data.get('value')})
+        data = event.to_dict()
+        payload = data.get("payload")
+        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'summary': payload.get('value')})
 
 class TagEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
-        data = event.payload
-        mongo.update_one(collection_name= 'tickets', query= {'id': data.get('id')}, update_values= {'tags': data.get('value')})
+        data = event.to_dict()
+        payload = data.get("payload")
+        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'tags': payload.get('value')})
 
 class DeleteEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
-        data = event.payload
-        mongo.delete_one(collection_name= 'tickets', query= {'id': data.get('id')})
+        data = event.to_dict()
+        payload = data.get("payload")
+        mongo.delete_one(collection_name= 'tickets', query= {'id': int(payload.get('id'))})
         
 class EventProcessor:
     def __init__(self):
