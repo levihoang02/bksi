@@ -12,6 +12,9 @@ def get_ticket_by_id(ticket_id):
         ticket = mongo.find_one('tickets', {'id': id})
         
         if ticket:
+            if '_id' in ticket:
+                ticket['_id'] = str(ticket['_id'])
+
             return jsonify(ticket), 200
         else:
             return jsonify({"error": "Ticket not found"}), 404
