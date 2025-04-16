@@ -7,8 +7,9 @@ ticket_bp = Blueprint("ticket", __name__)
 @ticket_bp.route("/use/<ticket_id>", methods=["GET"])
 def get_ticket_by_id(ticket_id):
     try:
+        id = int(ticket_id)
         # Find ticket by 'id'
-        ticket = mongo.find_one('tickets', {'id': ticket_id})
+        ticket = mongo.find_one('tickets', {'id': id})
         
         if ticket:
             return jsonify(ticket), 200
