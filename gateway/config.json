@@ -7,21 +7,21 @@
         {"name":"Dashboard", "endPoint": "dashboard", "instances": [
           {
             "id": "Dashboard1",
-            "host": "127.0.0.1",
+            "host": "dashboard",
             "port": 8080
           }
         ]},
         {"name":"Report",  "endPoint": "report", "instances": [
           {
             "id": "Report1",
-            "host":"127.0.0.1", 
+            "host":"report", 
             "port": 5000
           }
         ]},
         {"name":"Manage",  "endPoint": "manage", "instances": [
           {
             "id": "Manage1",
-            "host":"127.0.0.1", 
+            "host":"manage", 
             "port": 3200
           }
         ]}
