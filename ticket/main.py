@@ -8,7 +8,7 @@ from flask import Flask, Response
 from utils.config import Config
 from kafka_utils.consumer import KafkaConsumerService
 from kafka_utils.dlq_consumer import DLQConsumer
-from kafka_utils.event import Event
+from kafka_utils.event import Event, debezium_to_event
 from handlers.bksi import EventProcessor
 from prometheus_metrics import (
     REQUEST_COUNT, REQUEST_LATENCY, get_metrics, system_monitor
@@ -39,11 +39,21 @@ def shutdown_handler(signal, frame):
 signal.signal(signal.SIGINT, shutdown_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)
 
-def process_func(msg_data):
+def process_func(msg_data: Dict[str, Any]):
     try:
-        event = Event.from_dict(msg_data)
-        processor.process_event(event)
+        # If the message comes from Debezium (check for specific Debezium fields)
+        if "before" in msg_data and "after" in msg_data:
+            event = debezium_to_event(msg_data)
+        else:
+            # Otherwise, assume it's a regular event
+            event = Event.from_dict(msg_data)
+
+        # Validate the event
+        if event.validate():
+            processor.process_event(event)
+
     except Exception as e:
+        print(f"Error processing event: {e}")
         raise e
     finally:
         pass

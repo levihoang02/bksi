@@ -55,3 +55,31 @@ class Event:
             return True
         except AssertionError as e:
             raise ValueError(f"Event validation failed: {str(e)}")
+        
+def debezium_to_event(debezium_msg: Dict[str, Any]) -> Event:
+    try:
+        op_type = debezium_msg.get('op')
+        source = "debezium"
+
+        # Choose payload based on the operation type
+        if op_type == "c":
+            payload = debezium_msg.get('after', {})
+            op = EventType.CREATE
+        elif op_type == "u":
+            payload = debezium_msg.get('after', {})
+            op = EventType.UPDATE
+        elif op_type == "d":
+            payload = debezium_msg.get('before', {})  # <- use before for deletes
+            op = EventType.DELETE
+        else:
+            raise ValueError(f"Unsupported Debezium operation type: {op_type}")
+
+        return Event(
+            source=source,
+            op=op,
+            payload=payload,
+            timestamp=datetime.utcnow().isoformat(),
+            version="1.0"
+        )
+    except Exception as e:
+        raise ValueError(f"Failed to convert Debezium message to event: {e}")
