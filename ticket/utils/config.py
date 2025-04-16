@@ -8,7 +8,13 @@ class Config:
     KAFKA_BROKERS_EXTERNAL = os.getenv("KAFKA_BROKERS_EXTERNAL")
     KAFKA_CONSUMER_GROUP = os.getenv("KAFKA_CONSUMER_GROUP")
     KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID")
-    KAFKA_CONSUME_TOPIC = os.getenv("KAFKA_CONSUME_TOPIC")
+    KAFKA_CONSUME_TOPIC = None
+    topics_raw = os.getenv("KAFKA_CONSUME_TOPIC", "")
+    topics = [t.strip() for t in topics_raw.split(",") if t.strip()]
+    if len(topics) == 1:
+        KAFKA_CONSUME_TOPIC = topics[0]
+    else:
+        KAFKA_CONSUME_TOPIC = topics
     MONGODB_HOST = os.getenv("MONGODB_HOST")
     MONGODB_PORT = os.getenv("MONGODB_PORT")  
     MONGODB_DATABASE = os.getenv("MONGODB_DATABASE")  
