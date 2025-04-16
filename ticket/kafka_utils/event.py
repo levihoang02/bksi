@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 from typing import Dict, Any
 from dataclasses import dataclass, field
@@ -23,7 +23,7 @@ class Event:
     op: EventType
     payload: Dict[str, Any]
     id: int = field(default_factory=generate_event_id)
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     version: str = field(default="1.0")
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,7 +69,7 @@ def debezium_to_event(debezium_msg: Dict[str, Any]) -> Event:
         #     payload = debezium_msg.get('after', {})
         #     op = EventType.UPDATE
         elif op_type == "d":
-            payload = debezium_msg.get('before', {})  # <- use before for deletes
+            payload = debezium_msg.get('before', {})  # use before for deletes
             op = EventType.DELETE
         else:
             raise ValueError(f"Skipping unsupported Debezium operation type: {op_type}")

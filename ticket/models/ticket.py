@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Ticket:
     def __init__(self, id, content, tags= [], summary=None, ner=[]):
@@ -7,7 +7,7 @@ class Ticket:
         self.tags = tags
         self.summary = summary,
         self.ner = ner
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
     
     def to_dict(self):
         return {
