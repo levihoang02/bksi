@@ -72,8 +72,7 @@ def debezium_to_event(debezium_msg: Dict[str, Any]) -> Event:
             payload = debezium_msg.get('before', {})  # <- use before for deletes
             op = EventType.DELETE
         else:
-            print(f"Skipping unsupported Debezium operation type: {op_type}")
-            pass
+            raise ValueError(f"Skipping unsupported Debezium operation type: {op_type}")
         return Event(
             source=source,
             op=op,
