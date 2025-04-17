@@ -10,7 +10,7 @@ const { requestLogger } = require('./services/logger');
 const corsOptions = {
     origin: '*', // Allow all origins
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'bksi-api-key'],
     credentials: true,
 };
 
