@@ -7,7 +7,15 @@ const routing = require('./routes/index');
 const cookieParser = require('cookie-parser');
 const { requestLogger } = require('./services/logger');
 
-app.use(cors());
+const corsOptions = {
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(cookieParser());
 
