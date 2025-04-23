@@ -1,7 +1,0 @@
-fastapi
-confluent-kafka
-Marshmallow
-uvicorn
-python-dotenv
-retry
-prometheus_client

@@ -1,0 +1,350 @@
+services:
+    zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        environment:
+            ZOOKEEPER_CLIENT_PORT: 2181
+            ZOOKEEPER_SERVER_ID: 1
+        ports:
+            - '8222:2181'
+        networks:
+            - app-network
+
+    kafka-1:
+        image: confluentinc/cp-kafka:latest
+        ports:
+            - '8200:9092'
+            - '8201:29092'
+        environment:
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,
+                EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,
+                DOCKER://kafka-1:29092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_BROKER_ID: 1
+        depends_on:
+            - zookeeper
+        deploy:
+            replicas: 1
+        networks:
+            - app-network
+
+    kafka-2:
+        image: confluentinc/cp-kafka:latest
+        ports:
+            - '8202:9093'
+            - '8203:29093'
+        environment:
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19093,
+                EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093,
+                DOCKER://kafka-2:29093
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_BROKER_ID: 1
+        depends_on:
+            - zookeeper
+        deploy:
+            replicas: 1
+        networks:
+            - app-network
+
+    kafka-3:
+        image: confluentinc/cp-kafka:latest
+        ports:
+            - '8204:9094'
+            - '8205:29094'
+        environment:
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:19094,
+                EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,
+                DOCKER://kafka-3:29094
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_BROKER_ID: 1
+        depends_on:
+            - zookeeper
+        deploy:
+            replicas: 1
+        networks:
+            - app-network
+
+    kafdrop1:
+        image: obsidiandynamics/kafdrop
+        ports:
+            - '8206:9000'
+        environment:
+            KAFKA_BROKERCONNECT: kafka-1:19092,kafka-2:19093,kafka-3:19094
+            JVM_OPTS: '-Xms32M -Xmx64M'
+        networks:
+            - app-network
+
+    redis:
+        image: redis
+        container_name: redis-server
+        ports:
+            - '8207:6379'
+        volumes:
+            - redis-data:/data
+        networks:
+            - app-network
+
+    mongodb:
+        image: mongo:latest
+        container_name: mongodb
+        restart: always
+        ports:
+            - '8208:27017'
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: admin
+            MONGO_INITDB_ROOT_PASSWORD: password
+        volumes:
+            - mongodb-data:/data/db
+        networks:
+            - app-network
+    prometheus:
+        image: prom/prometheus:latest
+        ports:
+            - '8209:9090'
+        volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+            - prom-config:/etc/prometheus/targets
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--web.enable-lifecycle'
+        networks:
+            - app-network
+    alertmanager:
+        image: prom/alertmanager
+        ports:
+            - '8210:9095'
+        volumes:
+            - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+        command:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+        restart: always
+        networks:
+            - app-network
+
+    healthcheck:
+        image: hoangle31/bksi-be:bksi-healthcheck
+        ports:
+            - '8220:8001'
+        user: root
+        env_file:
+            - ./healthcheck/.env
+        depends_on:
+            - alertmanager
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+        networks:
+            - app-network
+    dashboard:
+        image: hoangle31/bksi-be:bksi-dashboard
+        environment:
+            - PYTHONUNBUFFERED=1
+        # ports:
+        #     - '8081:8081'
+        volumes:
+            - prom-config:/etc/prometheus/targets
+        user: root
+        env_file:
+            - ./dashboard/.env
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+            - mongodb
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 3G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+        networks:
+            - app-network
+
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - '8211:3000'
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+        volumes:
+            - grafana_data:/var/lib/grafana
+        depends_on:
+            - prometheus
+        networks:
+            - app-network
+    connect:
+        image: quay.io/debezium/connect:2.5
+        container_name: connect
+        ports:
+            - '8212:8083'
+        environment:
+            GROUP_ID: 1
+            BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19093,kafka-3:19094
+            CONFIG_STORAGE_TOPIC: connect_configs
+            OFFSET_STORAGE_TOPIC: connect_offsets
+            STATUS_STORAGE_TOPIC: connect_statuses
+            CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+            CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+            CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+            CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+        networks:
+            - app-network
+    ticket-service:
+        image: hoangle31/bksi-be:bksi-ticket-service
+        # ports:
+        #     - '8080:8080'
+        user: root
+        env_file:
+            - ./ticket/.env
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+            - connect
+            - mongodb
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 5G
+                reservations:
+                    cpus: '1'
+                    memory: 2G
+        networks:
+            - app-network
+    # ai-demo:
+    #     build:
+    #         context: .
+    #         dockerfile: ai-services/service-interface/Dockerfile
+    #     container_name: AI-demo
+    #     env_file:
+    #         - ./ai-services/service-interface/.env
+    #     ports:
+    #         - '8120:8120'
+    #     networks:
+    #         - app-network
+    management-module:
+        image: hoangle31/bksi-be:bksi-management-module
+        # ports:
+        #     - '3200:3200'
+        env_file:
+            - ./management/.env
+        user: '1000:1000' # Run as non-root user
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+            - mongodb
+        cap_drop:
+            - ALL # Drop all capabilities
+        cap_add:
+            - NET_ADMIN # Add only required capabilities
+        security_opt:
+            - no-new-privileges:true
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+        networks:
+            - app-network
+
+    report-service:
+        image: hoangle31/bksi-be:bksi-report-service
+        # ports:
+        #     - '5000:5000'
+        environment:
+            - MONGO_URI=mongodb://admin:password@mongodb:27017/feedback_db?authSource=admin
+            - FLASK_ENV=production
+            - FLASK_APP=main.py
+        depends_on:
+            - mongodb
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+        networks:
+            - app-network
+        restart: always
+
+    api-gateway:
+        image: hoangle31/bksi-be:bksi-api-gateway
+        ports:
+            - '8215:8210'
+        env_file:
+            - ./gateway/.env
+        security_opt:
+            - no-new-privileges:true
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 5G
+                reservations:
+                    cpus: '2'
+                    memory: 2G
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: overlay
+
+volumes:
+    redis-data:
+    mongodb-data:
+        driver: local
+    prometheus_data:
+        driver: local
+    grafana_data:
+    prom-config:
+        driver: local
