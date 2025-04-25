@@ -5,7 +5,7 @@ import sys
 import threading
 from flask import Flask, Response, request, jsonify
 from utils.config import Config
-from kafka_utils.consumer import KafkaConsumerService
+from kafka_utils.consumer import KafkaConsumerService, create_topic_configs, seed_topics
 from kafka_utils.dlq_consumer import DLQConsumer
 from kafka_utils.event import Event
 from handlers.manage import EventProcessor
@@ -18,6 +18,10 @@ from models.metric import Metric
 METRICS_FILE_PATH = 'data/metrics.json'
 
 config = Config()
+
+topic_conf = create_topic_configs([config.KAFKA_CONSUME_TOPIC], config.DLQ_TOPIC, 2, 2, 2, 2)
+seed_topics(brokers= config.KAFKA_BROKERS_INTERNAL, topic_configs=topic_conf)
+
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 dlq_consumer = DLQConsumer(config.DLQ_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 processor = EventProcessor()
@@ -77,10 +81,10 @@ def initialize_background_tasks():
     seed_metrics_from_json(file_path= METRICS_FILE_PATH)
     system_monitor.start()
     
-    consumer_thread = threading.Thread(target=run_kafka_consumer)
+    consumer_thread = threading.Thread(target=run_kafka_consumer, daemon=True)
     consumer_thread.start()
     
-    dlq_thread = threading.Thread(target= run_dlq_consumer)
+    dlq_thread = threading.Thread(target= run_dlq_consumer, daemon=True)
     dlq_thread.start()
     
 initialize_background_tasks()

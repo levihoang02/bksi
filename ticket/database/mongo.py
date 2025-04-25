@@ -4,23 +4,15 @@ from utils.config import Config
 config = Config()
 
 class MongoDBService:
-    def __init__(self, host="localhost", port='27017', 
-            db_name='mydb', username=None, password=None):
-        self.host = host
-        self.port = port
+    def __init__(self, URI, db_name='mydb'):
+        self.URI = URI
         self.db_name = db_name
-        self.username = username
-        self.password = password
         self.client = self._connect()
         self.db = self.client[self.db_name]
     
     def _connect(self):
         """Establish MongoDB connection"""
-        if self.username and self.password:
-            connection_string = f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/"
-        else:
-            connection_string = f"mongodb://{self.host}:{self.port}/"
-        return MongoClient(connection_string)
+        return MongoClient(self.URI)
     
     def get_collection(self, collection_name):
         """Get a MongoDB collection"""
@@ -65,6 +57,4 @@ class MongoDBService:
         """Close the MongoDB connection."""
         self.client.close()
         
-mongo = MongoDBService(host= config.MONGODB_HOST, port=config.MONGODB_PORT, 
-                       db_name= config.MONGODB_DATABASE, 
-                       username= config.DB_USERNAME, password= config.DB_PASSWORD)
+mongo = MongoDBService(config.MONGO_URI, db_name= config.MONGODB_DATABASE)

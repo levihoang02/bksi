@@ -86,6 +86,7 @@ def receive_alert():
             confirm_map[fid] = key
 
         confirm_link = f"{HOST_URL}/confirm/{fid}"
+        # print("DEBUG: ", confirm_link)
         with app.app_context():
             send_email_alert(job, instance, summary, confirm_link)
 

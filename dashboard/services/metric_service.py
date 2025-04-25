@@ -35,6 +35,7 @@ class MetricService:
 
 from utils.config import Config
 config = Config()
+# print(config.MONGO_URI)
 metric_service = MetricService(config.MONGO_URI, 'metric_db', 'metrics')
 
 def seed_metrics_from_json(file_path: str):

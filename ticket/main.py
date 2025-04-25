@@ -6,7 +6,7 @@ import threading
 from typing import Dict, Any
 from flask import Flask, Response
 from utils.config import Config
-from kafka_utils.consumer import KafkaConsumerService
+from kafka_utils.consumer import KafkaConsumerService, create_topic_configs, seed_topics
 from kafka_utils.dlq_consumer import DLQConsumer
 from kafka_utils.event import Event, debezium_to_event
 from handlers.bksi import EventProcessor
@@ -17,6 +17,11 @@ from database.mongo import mongo
 from routes.ticket import ticket_bp
 
 config = Config()
+
+topic_configs = create_topic_configs(config.KAFKA_CONSUME_TOPIC, config.DLQ_TOPIC)
+futures = seed_topics(brokers= config.KAFKA_BROKERS_INTERNAL, topic_configs=topic_configs)
+
+
 message_consumer = KafkaConsumerService(config.KAFKA_CONSUME_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 dlq_consumer = DLQConsumer(config.DLQ_TOPIC, config.KAFKA_GROUP_ID, config.KAFKA_BROKERS_INTERNAL)
 processor = EventProcessor()
@@ -65,18 +70,18 @@ def run_kafka_consumer():
     
 def run_dlq_consumer():
     dlq_consumer.consume_dlq(process_func)
+    
+
 
 
 def initialize_background_tasks():
     print("Dashboard Service Start!")
     system_monitor.start()
 
-    consumer_thread = threading.Thread(target=run_kafka_consumer)
-    consumer_thread.daemon = True
+    consumer_thread = threading.Thread(target=run_kafka_consumer, daemon=True)
     consumer_thread.start()
     
-    consumer_thread = threading.Thread(target=run_dlq_consumer)
-    consumer_thread.daemon = True
+    consumer_thread = threading.Thread(target=run_dlq_consumer, daemon= True)
     consumer_thread.start()
     
 initialize_background_tasks()
