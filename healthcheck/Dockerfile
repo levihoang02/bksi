@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install requirements into a temporary install location
-COPY report/requirements.txt .
+COPY healthcheck/requirements.txt .
 RUN pip install --upgrade pip \
     && pip install --prefix=/install -r requirements.txt
 
