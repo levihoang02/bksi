@@ -41,7 +41,7 @@ services:
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
             KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-            KAFKA_BROKER_ID: 1
+            KAFKA_BROKER_ID: 2
         depends_on:
             - zookeeper
         deploy:
@@ -61,7 +61,7 @@ services:
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
             KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-            KAFKA_BROKER_ID: 1
+            KAFKA_BROKER_ID: 3
         depends_on:
             - zookeeper
         deploy:
@@ -128,7 +128,7 @@ services:
             - app-network
 
     healthcheck:
-        image: hoangle31/bksi-be:bksi-healthcheck
+        image: registry.swarm.internal/bksi-be:healthcheck
         ports:
             - '8220:8001'
         user: root
@@ -151,7 +151,7 @@ services:
         networks:
             - app-network
     dashboard:
-        image: hoangle31/bksi-be:bksi-dashboard
+        image: registry.swarm.internal/bksi-be:dashboard
         environment:
             - PYTHONUNBUFFERED=1
         # ports:
@@ -216,7 +216,7 @@ services:
         networks:
             - app-network
     ticket-service:
-        image: hoangle31/bksi-be:bksi-ticket-service
+        image: registry.swarm.internal/bksi-be:ticket
         # ports:
         #     - '8080:8080'
         user: root
@@ -254,7 +254,7 @@ services:
     #     networks:
     #         - app-network
     management-module:
-        image: hoangle31/bksi-be:bksi-management-module
+        image: registry.swarm.internal/bksi-be:management
         # ports:
         #     - '3200:3200'
         env_file:
@@ -287,7 +287,7 @@ services:
             - app-network
 
     report-service:
-        image: hoangle31/bksi-be:bksi-report-service
+        image: registry.swarm.internal/bksi-be:report
         # ports:
         #     - '5000:5000'
         environment:
@@ -313,7 +313,7 @@ services:
         restart: always
 
     api-gateway:
-        image: hoangle31/bksi-be:bksi-api-gateway
+        image: registry.swarm.internal/bksi-be:gateway
         ports:
             - '8215:8210'
         env_file:
@@ -342,9 +342,6 @@ networks:
 volumes:
     redis-data:
     mongodb-data:
-        driver: local
     prometheus_data:
-        driver: local
     grafana_data:
     prom-config:
-        driver: local
