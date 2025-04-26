@@ -1,4 +1,4 @@
-from confluent_kafka import Consumer, KafkaException
+from confluent_kafka import Consumer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
 import json
 
@@ -95,6 +95,11 @@ def seed_topics(brokers, topic_configs):
                     future.result()  # Block until topic is actually created
                     print(f"Topic '{topic}' created successfully.")
                 except Exception as e:
+                    err = e.args[0]
+                    if isinstance(err, KafkaError) and err.code() == KafkaError.TOPIC_ALREADY_EXISTS:
+                        print(f"Topic '{topic}' already exists. Ignoring.")
+                    else:
+                        print(f"Failed to create topic '{topic}': {e}")
                     print(f"Failed to create topic '{topic}': {e}")
         else:
             print("No topics needed to be created.")
