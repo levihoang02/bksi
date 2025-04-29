@@ -18,7 +18,7 @@ def get_ticket_by_id(ticket_id):
 
             return jsonify(ticket), 200
         else:
-            new_ticket = Ticket(id=ticket_id, content=None, tags=[], summary=None, ner=[])
+            new_ticket = Ticket(id=id, content=None, tags=[], summary=None, ner=[])
             mongo.insert_one('tickets', new_ticket.to_dict())
             return jsonify({
                 "message": "Ticket not found, new ticket created.",

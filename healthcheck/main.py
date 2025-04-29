@@ -45,7 +45,7 @@ def index():
 @app.route('/alert', methods=['POST'])
 def receive_alert():
     data = request.json
-
+    print("Received alert data:", data)
     for alert in data.get('alerts', []):
         job = alert['labels'].get('job')
         instance = alert['labels'].get('instance')
@@ -116,7 +116,8 @@ def cleanup():
                 confirm_link = f"{HOST_URL}/confirm/{fid}"
                 with app.app_context():
                     send_email_alert(job, instance, "Service is still down", confirm_link)
-            elif data['confirmed']:
+            elif data['confirmed'] or now - data['timestamp'] > 900:
+                print(f"[CLEANUP] Cleaning up {key}. Confirmed: {data['confirmed']} | Age: {now - data['timestamp']:.1f}s")
                 del state[key]
 
 # Start the scheduler

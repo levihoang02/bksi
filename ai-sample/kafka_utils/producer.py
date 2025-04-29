@@ -25,7 +25,6 @@ class KafkaProducerService(AbstractProducer):
                 topic,
                 key=key.encode("utf-8"),
                 value=json.dumps(event_dict).encode("utf-8"),
-                callback=self.delivery_report
             )
             
         except Exception as e:
@@ -42,4 +41,5 @@ producer = KafkaProducerService({
     'acks': 'all',
     'retries': 3,
     'retry.backoff.ms': 100,
+    'security.protocol': 'PLAINTEXT',
 })

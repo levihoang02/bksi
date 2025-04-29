@@ -15,7 +15,8 @@ services:
             - '8200:9092'
             - '8201:29092'
         environment:
-            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,DOCKER://kafka-1:29092
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:8200,DOCKER://kafka-1:29092
+            KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,DOCKER://0.0.0.0:29092
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
             KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -33,7 +34,8 @@ services:
             - '8202:9093'
             - '8203:29093'
         environment:
-            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19093,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093,DOCKER://kafka-2:29093
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19093,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:8203,DOCKER://kafka-2:29093
+            KAFKA_LISTENERS: INTERNAL://0.0.0.0:19093,EXTERNAL://0.0.0.0:9093,DOCKER://0.0.0.0:29093
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
             KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -51,7 +53,8 @@ services:
             - '8204:9094'
             - '8205:29094'
         environment:
-            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,DOCKER://kafka-3:29094
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:8204,DOCKER://kafka-3:29094
+            KAFKA_LISTENERS: INTERNAL://0.0.0.0:19094,EXTERNAL://0.0.0.0:9094,DOCKER://0.0.0.0:29094
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
             KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
             KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -188,27 +191,27 @@ services:
             - prometheus
         networks:
             - app-network
-    connect:
-        image: quay.io/debezium/connect:2.5
-        container_name: connect
-        ports:
-            - '8212:8083'
-        environment:
-            GROUP_ID: 1
-            BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19093,kafka-3:19094
-            CONFIG_STORAGE_TOPIC: connect_configs
-            OFFSET_STORAGE_TOPIC: connect_offsets
-            STATUS_STORAGE_TOPIC: connect_statuses
-            CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-            CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-            CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
-            CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
-        depends_on:
-            - kafka-1
-            - kafka-2
-            - kafka-3
-        networks:
-            - app-network
+    # connect:
+    #     image: quay.io/debezium/connect:2.5
+    #     container_name: connect
+    #     ports:
+    #         - '8212:8083'
+    #     environment:
+    #         GROUP_ID: 1
+    #         BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19093,kafka-3:19094
+    #         CONFIG_STORAGE_TOPIC: connect_configs
+    #         OFFSET_STORAGE_TOPIC: connect_offsets
+    #         STATUS_STORAGE_TOPIC: connect_statuses
+    #         CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    #         CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    #         CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+    #         CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+    #     depends_on:
+    #         - kafka-1
+    #         - kafka-2
+    #         - kafka-3
+    #     networks:
+    #         - app-network
     ticket-service:
         image: registry.swarm.internal/bksi-be:ticket
         # ports:
@@ -314,6 +317,8 @@ services:
             - ./gateway/.env
         security_opt:
             - no-new-privileges:true
+        depends_on:
+            - redis
         ulimits:
             nofile:
                 soft: 65536
@@ -328,6 +333,29 @@ services:
                     memory: 256M
         networks:
             - app-network
+    # ai-sample:
+    #     image: registry.swarm.internal/bksi-be:ai-sample
+    #     ports:
+    #         - '5000:5000'
+    #     depends_on:
+    #         - kafka-1
+    #         - kafka-2
+    #         - kafka-3
+    #     ulimits:
+    #         nofile:
+    #             soft: 65536
+    #             hard: 65536
+    #     deploy:
+    #         resources:
+    #             limits:
+    #                 cpus: '1'
+    #                 memory: 512M
+    #             reservations:
+    #                 cpus: '0.5'
+    #                 memory: 256M
+    #     networks:
+    #         - app-network
+    #     restart: always
 
 networks:
     app-network:

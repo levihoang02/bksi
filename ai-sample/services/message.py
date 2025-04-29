@@ -1,6 +1,6 @@
 import threading
-from services.producer import producer
-from services.event import Event
+from kafka_utils.producer import producer
+from kafka_utils.event import Event
 
 def async_publish_event(topic: str, event: Event):
     """Publish an event asynchronously without blocking."""

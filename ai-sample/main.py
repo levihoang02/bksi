@@ -19,23 +19,31 @@ app = Flask(__name__)
 
 # Environment variable for HuggingFace API Key
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
-HEADERS = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
 
 # Define model endpoints
 MODEL_ENDPOINTS = {
     "summary": "https://api-inference.huggingface.co/models/facebook/bart-large-cnn",
-    "ner": "https://api-inference.huggingface.co/models/dslim/bert-base-NER",
+    "ner": "https://api-inference.huggingface.co/models/dbmdz/bert-large-cased-finetuned-conll03-english",
     "suggest_answer": "https://api-inference.huggingface.co/models/gpt2"  # Update if you have a better model
 }
 
-@monitor_model_inference()
-def query_hf_api(model: str, payload: dict):
-    """Query Hugging Face Inference API"""
-    url = MODEL_ENDPOINTS[model]
-    response = requests.post(url, headers=HEADERS, json=payload)
-    
+def query_hf_api(task, payload):
+    model_url = MODEL_ENDPOINTS.get(task)
+    if not model_url:
+        raise ValueError(f"No endpoint configured for task '{task}'")
+
+    headers = {
+        "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(model_url, headers=headers, json=payload)
+
     print(f"[DEBUG] status_code: {response.status_code}")
     print(f"[DEBUG] response.text: {response.text}")
+
+    if response.status_code != 200:
+        raise RuntimeError(f"Hugging Face API call failed with status code {response.status_code}: {response.text}")
 
     try:
         return response.json()
@@ -51,23 +59,22 @@ def summarize_text():
 
     if not text:
         return jsonify({"error": "Missing 'text' field"}), 400
-
-    summary_result = query_hf_api("summary", {"inputs": text})
-    summary = summary_result[0]["summary_text"] if summary_result else "No summary available."
-    
     try:
         event = Event(
             source=KAFKA_CLIENT_ID,
             op=EventType.SUMMARIZE,
             payload={
                 "ticket_id": data.get("ticket_id"),
-                "value": summary
+                "value": "asndjasndjasd"
             }
         )
         async_publish_event(KAFKA_TOPIC, event)
     except Exception as e:
         print(e)
         pass
+    summary_result = query_hf_api("summary", {"inputs": text})
+    summary = summary_result[0]["summary_text"] if summary_result else "No summary available."
+    
     return jsonify({
         "summary": summary
     })

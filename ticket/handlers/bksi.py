@@ -47,6 +47,7 @@ class SumEventHandler(AbstractEventHandler):
         data = event.to_dict()
         payload = data.get("payload")
         ticket_id = payload.get('ticket_id')
+        print(payload.get('value'))
         if ticket_id is None:
             raise ValueError("Missing 'ticket_id' in event payload for NER update.")
         mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'summary': payload.get('value')})
