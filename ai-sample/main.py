@@ -60,6 +60,7 @@ def summarize_text():
             source=KAFKA_CLIENT_ID,
             op=EventType.SUMMARIZE,
             payload={
+                "ticket_id": data.get("ticket_id"),
                 "value": summary
             }
         )
@@ -89,6 +90,7 @@ def highlight_entities():
             source=KAFKA_CLIENT_ID,
             op=EventType.NER,
             payload={
+                "ticket_id": data.get("ticket_id"),
                 "value": entities
             }
         )
