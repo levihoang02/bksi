@@ -1,0 +1,6 @@
+Flask
+requests
+python-dotenv
+prometheus-client
+psutil
+confluent-kafka

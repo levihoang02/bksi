@@ -321,11 +321,11 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '2'
-                    memory: 3G
+                    cpus: '1'
+                    memory: 512M
                 reservations:
                     cpus: '1'
-                    memory: 2G
+                    memory: 256M
         networks:
             - app-network
 
