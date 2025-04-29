@@ -59,22 +59,21 @@ def summarize_text():
 
     if not text:
         return jsonify({"error": "Missing 'text' field"}), 400
+    summary_result = query_hf_api("summary", {"inputs": text})
+    summary = summary_result[0]["summary_text"] if summary_result else "No summary available."
     try:
         event = Event(
             source=KAFKA_CLIENT_ID,
             op=EventType.SUMMARIZE,
             payload={
                 "ticket_id": data.get("ticket_id"),
-                "value": "asndjasndjasd"
+                "value": summary
             }
         )
         async_publish_event(KAFKA_TOPIC, event)
     except Exception as e:
         print(e)
         pass
-    summary_result = query_hf_api("summary", {"inputs": text})
-    summary = summary_result[0]["summary_text"] if summary_result else "No summary available."
-    
     return jsonify({
         "summary": summary
     })
