@@ -18,11 +18,12 @@ def get_ticket_by_id(ticket_id):
 
             return jsonify(ticket), 200
         else:
-            ticket = ticket = Ticket(id=ticket_id, content=None,
-                                tags=[], summary=None, ner=[])
-            ticket_dict = ticket.to_dict()
-            mongo.insert_one('tickets', ticket_dict)
-            return jsonify({"error": "Ticket not found"}), 404
+            new_ticket = Ticket(id=ticket_id, content=None, tags=[], summary=None, ner=[])
+            mongo.insert_one('tickets', new_ticket.to_dict())
+            return jsonify({
+                "message": "Ticket not found, new ticket created.",
+                "ticket_id": ticket_id
+            }), 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -37,13 +37,19 @@ class NerEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         data = event.to_dict()
         payload = data.get("payload")
-        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'ner': payload.get('value')})
+        ticket_id = payload.get('ticket_id')
+        if ticket_id is None:
+            raise ValueError("Missing 'ticket_id' in event payload for NER update.")
+        mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'ner': payload.get('value')})
         
 class SumEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         data = event.to_dict()
         payload = data.get("payload")
-        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'summary': payload.get('value')})
+        ticket_id = payload.get('ticket_id')
+        if ticket_id is None:
+            raise ValueError("Missing 'ticket_id' in event payload for NER update.")
+        mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'summary': payload.get('value')})
 
 class TagEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
