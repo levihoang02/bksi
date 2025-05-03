@@ -1,4 +1,5 @@
 const { getClient, withRedisClient } = require('./redis');
+const axios = require('axios');
 
 async function storeInstances(endPoint, instances) {
     return withRedisClient(async () => {
@@ -116,6 +117,51 @@ async function deleteInstanceFromRedis(endPoint, instanceId) {
     });
 }
 
+async function updateAllInstancesStatus() {
+    return withRedisClient(async () => {
+        const multi = client.multi();
+
+        const allInstanceKeys = await client.keys('*:instances:*');
+
+        if (allInstanceKeys.length === 0) {
+            console.log('[CRON JOB] No instances found in Redis.');
+            return;
+        }
+
+        for (const instanceKey of allInstanceKeys) {
+            const instanceDetails = await client.hGetAll(instanceKey);
+            const { host, port, status } = instanceDetails;
+
+            // Perform health check by making a request to the /metrics endpoint
+            const metricsUrl = `http://${host}:${port}/metrics`;
+            let newStatus = status; // Default to current status if health check doesn't change
+
+            try {
+                const response = await axios.get(metricsUrl, { timeout: 10000 });
+
+                // If the health check returns 200, mark as healthy (status 'true')
+                if (response.status === 200) {
+                    newStatus = 'true';
+                    console.log(`${instanceKey} is healthy.`);
+                } else {
+                    newStatus = 'false';
+                    console.log(`${instanceKey} is unhealthy (Status: ${response.status}).`);
+                }
+            } catch (error) {
+                newStatus = 'false';
+                console.log(`Failed to reach ${instanceKey} via /metrics: ${error.message}`);
+            }
+
+            // Update the status to 'true' or 'false' based on health check result
+            multi.hSet(instanceKey, 'status', newStatus);
+        }
+
+        // Execute all multi commands at once (batching for efficiency)
+        await multi.exec();
+        console.log('Status updated for all instances in Redis.');
+    });
+}
+
 module.exports = {
     storeInstances,
     incrementConnection,
@@ -123,4 +169,5 @@ module.exports = {
     getLeastConnectionsInstance,
     deleteInstanceFromRedis,
     deleteServiceFromRedis,
+    updateAllInstancesStatus,
 };
