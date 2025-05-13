@@ -21,7 +21,7 @@
         {"name":"Manage",  "endPoint": "manage", "instances": [
           {
             "id": "Manage1",
-            "host":"manage", 
+            "host":"management-module",
             "port": 3200
           }
         ]},

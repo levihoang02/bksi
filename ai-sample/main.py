@@ -16,6 +16,7 @@ KAFKA_CLIENT_ID = os.getenv("KAFKA_CLIENT_ID")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC")
 
 app = Flask(__name__)
+system_monitor = SystemMonitor()
 
 # Environment variable for HuggingFace API Key
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
@@ -148,4 +149,5 @@ def prometheus_metrics():
     return Response(data, mimetype=content_type)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    system_monitor.start()
+    app.run(host='0.0.0.0', port=5000, debug=True)

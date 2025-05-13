@@ -333,29 +333,29 @@ services:
                     memory: 256M
         networks:
             - app-network
-    # ai-sample:
-    #     image: registry.swarm.internal/bksi-be:ai-sample
-    #     ports:
-    #         - '5000:5000'
-    #     depends_on:
-    #         - kafka-1
-    #         - kafka-2
-    #         - kafka-3
-    #     ulimits:
-    #         nofile:
-    #             soft: 65536
-    #             hard: 65536
-    #     deploy:
-    #         resources:
-    #             limits:
-    #                 cpus: '1'
-    #                 memory: 512M
-    #             reservations:
-    #                 cpus: '0.5'
-    #                 memory: 256M
-    #     networks:
-    #         - app-network
-    #     restart: always
+    ai-sample:
+        image: registry.swarm.internal/bksi-be:ai-sample
+        ports:
+            - '5000:5000'
+        depends_on:
+            - kafka-1
+            - kafka-2
+            - kafka-3
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+                reservations:
+                    cpus: '0.5'
+                    memory: 256M
+        networks:
+            - app-network
+        restart: always
 
 networks:
     app-network:
