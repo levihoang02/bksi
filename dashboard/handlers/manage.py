@@ -37,6 +37,7 @@ def create_dashboard(metric_names: list[str], job_name: str):
         print(f"Creating new dashboard for {job_name}...")
 
         metrics = metric_service.get_metric_types(metric_names= metric_names)
+        # print(metrics)
 
         dashboard_json = generate_dashboard_json_from_metrics(metrics= metrics, job_name= job_name)
         

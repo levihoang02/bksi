@@ -3,6 +3,7 @@ global:
 
 route:
   receiver: 'confirm-service'
+  repeat_interval: 1m
 
 receivers:
   - name: 'confirm-service'

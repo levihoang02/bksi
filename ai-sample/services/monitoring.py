@@ -1,4 +1,5 @@
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from Flask import Response
 import time
 import threading
 import psutil
@@ -28,8 +29,8 @@ MODEL_RESPONSE_TIME = Histogram('model_response_time_seconds', 'Time taken per i
 BATCH_SIZE = Histogram('model_batch_size', 'Batch size of input')
 INPUT_DATA_SIZE = Histogram('model_input_data_size_bytes', 'Input data size in bytes')
 OUTPUT_DATA_SIZE = Histogram('model_output_data_size_bytes', 'Output data size in bytes')
-INPUT_TOKENS = Histogram('model_input_tokens_total', 'Number of tokens in the input')
-OUTPUT_TOKENS = Histogram('model_output_tokens_total', 'Number of tokens in the output')
+INPUT_TOKENS = Histogram('model_input_tokens_total', 'Number of tokens in the input', buckets=[10, 50, 100, 200, 500, 1000, 2000, 5000])
+OUTPUT_TOKENS = Histogram('model_output_tokens_total', 'Number of tokens in the output', buckets=[10, 50, 100, 200, 500, 1000, 2000, 5000])
 
 # Accuracy / Loss
 MODEL_ACCURACY = Gauge('ai_model_accuracy', 'Accuracy of the AI model')
@@ -162,6 +163,10 @@ def track_model_accuracy():
             try:
                 if isinstance(result, dict) and 'accuracy' in result:
                     MODEL_ACCURACY.set(result['accuracy'])
+                elif isinstance(result, Response):
+                    json_data = result.get_json()
+                    if json_data and 'accuracy' in json_data:
+                        MODEL_ACCURACY.set(json_data['accuracy'])
             except Exception:
                 pass
             return result
@@ -176,8 +181,36 @@ def track_model_loss():
             try:
                 if isinstance(result, dict) and 'loss' in result:
                     MODEL_LOSS.set(result['loss'])
+                elif isinstance(result, Response):
+                    json_data = result.get_json()
+                    if json_data and 'loss' in json_data:
+                        MODEL_ACCURACY.set(json_data['loss'])
             except Exception:
                 pass
+            return result
+        return wrapper
+    return decorator
+
+def track_output_metrics(metric_names: list[str], metric_registry: dict[str, Gauge]):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+
+            try:
+                output = None
+                if isinstance(result, dict):
+                    output = result
+                elif isinstance(result, Response):
+                    output = result.get_json()
+
+                if output:
+                    for name in metric_names:
+                        if name in output and name in metric_registry:
+                            metric_registry[name].set(output[name])
+            except Exception as e:
+                print(f"[track_output_metrics] Failed to track metrics: {e}")
+
             return result
         return wrapper
     return decorator

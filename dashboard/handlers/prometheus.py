@@ -11,12 +11,15 @@ def generate_dashboard_json_from_metrics(metrics: list[dict], job_name: str) -> 
     for i, metric in enumerate(metrics):
         panel_id = i + 1
         chart_type = metric["chart_type"]
-
+        metric_name = metric["metric_name"]
+        prom_type = metric.get("prom_type", "")
+        if (chart_type == "heatmap" or prom_type == "Histogram") and not metric_name.endswith("_bucket"):
+            metric_name += "_bucket"
         panel = {
             "type": chart_type,
             "title": metric["metric_name"],
             "targets": [{
-                "expr": f'{metric["metric_name"]}{{job="{job_name}"}}',
+                "expr": f'{metric_name}{{job="{job_name}"}}',
                 "refId": "A"
             }],
             "gridPos": {

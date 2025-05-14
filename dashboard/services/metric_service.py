@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 from datetime import datetime, timedelta
 from models.metric import Metric
 import json
@@ -10,9 +11,14 @@ class MetricService:
         self.db = self.client[self.db_name]
         self.collection_name = collection_name
         self.collection = self.db[self.collection_name]
+        self.collection.create_index("metric_name", unique=True)
 
     def save_metric(self, metric: Metric):
-        return self.collection.insert_one(metric.to_dict())
+        try:
+            return self.collection.insert_one(metric.to_dict())
+        except DuplicateKeyError:
+            print(f"[INFO] Metric '{metric.metric_name}' already exists. Skipping.")
+            return None
 
     def get_metric(self, metric_name: str):
         metric = self.collection.find({'metric_name': metric_name})
@@ -28,7 +34,7 @@ class MetricService:
     def get_metric_types(self, metric_names: list[str]) -> list[dict]:
         cursor = self.collection.find(
             {"metric_name": {"$in": metric_names}},
-            {"_id": 0, "metric_name": 1, "chart_type": 1}  # Adjusted fields
+            {"_id": 0, "metric_name": 1, "chart_type": 1, "prom_type": 1}  # Adjusted fields
         )
         result = list(cursor)
         return result
@@ -54,7 +60,7 @@ def seed_metrics_from_json(file_path: str):
         ]
 
         for item in new_metrics:
-            metric = Metric(metric_name=item["metric_name"], chart_type=item["chart_type"])
+            metric = Metric(metric_name=item["metric_name"], chart_type=item["chart_type"], prom_type=item["prom_type"])
             metric_service.save_metric(metric)
 
         print("Inserted new metrics to MongoDB.")
