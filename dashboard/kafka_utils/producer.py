@@ -11,6 +11,9 @@ class AbstractProducer(ABC):
 class KafkaProducerService(AbstractProducer):
     def __init__(self, config: dict):
         self.producer = Producer(config)
+        
+    def get_producer(self):
+        return self.producer
 
     def send_event(self, topic: str, event: Event):
         """Gửi event đến Kafka topic"""
@@ -44,7 +47,7 @@ producer = KafkaProducerService({
     'retry.backoff.ms': 100,
 })
 
-import datetime
+from datetime import datetime
 def send_to_dlq(event, error_message, retry_count=0):
     dlq_payload = {
         "original_event": event.to_dict(),
@@ -52,6 +55,7 @@ def send_to_dlq(event, error_message, retry_count=0):
         "timestamp": datetime.utcnow().isoformat(),
         "retry_count": retry_count + 1,
     }
-    producer.produce("dashboard-dlq", json.dumps(dlq_payload).encode("utf-8"))
-    producer.flush()
+    prod = producer.get_producer()
+    prod.produce("dashboard-dlq", json.dumps(dlq_payload).encode("utf-8"))
+    prod.flush()
     print(f"[DLQ] Event sent to DLQ due to error: {error_message}")

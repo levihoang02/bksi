@@ -8,3 +8,4 @@ Marshmallow
 pymongo
 retry
 bs4
+requests

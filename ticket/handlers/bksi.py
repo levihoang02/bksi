@@ -5,6 +5,7 @@ from utils.config import Config
 from helpers.html import decode_html
 from database.mongo import mongo
 from models.ticket import Ticket
+from router.factory import ModelRouterFactory
 
 config = Config()
 
@@ -33,30 +34,47 @@ class InsertEventHandler(AbstractEventHandler):
             mongo.insert_one(collection_name= 'tickets', data=data)
             producer.send_event('tickets', event= new_event)
             
-class NerEventHandler(AbstractEventHandler):
-    def handle_event(self, event: Event):
-        data = event.to_dict()
-        payload = data.get("payload")
-        ticket_id = payload.get('ticket_id')
-        if ticket_id is None:
-            raise ValueError("Missing 'ticket_id' in event payload for NER update.")
-        mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'ner': payload.get('value')})
+# class NerEventHandler(AbstractEventHandler):
+#     def handle_event(self, event: Event):
+#         data = event.to_dict()
+#         payload = data.get("payload")
+#         ticket_id = payload.get('ticket_id')
+#         if ticket_id is None:
+#             raise ValueError("Missing 'ticket_id' in event payload for NER update.")
+#         mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'ner': payload.get('value')})
         
-class SumEventHandler(AbstractEventHandler):
+# class SumEventHandler(AbstractEventHandler):
+#     def handle_event(self, event: Event):
+#         data = event.to_dict()
+#         payload = data.get("payload")
+#         ticket_id = payload.get('ticket_id')
+#         print(payload.get('value'))
+#         if ticket_id is None:
+#             raise ValueError("Missing 'ticket_id' in event payload for NER update.")
+#         mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'summary': payload.get('value')})
+
+# class TagEventHandler(AbstractEventHandler):
+#     def handle_event(self, event: Event):
+#         data = event.to_dict()
+#         payload = data.get("payload")
+#         mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'tags': payload.get('value')})
+        
+class GenericAIEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
+        task = event.op.value.lower()
+        mode = 'async'
         data = event.to_dict()
         payload = data.get("payload")
         ticket_id = payload.get('ticket_id')
-        print(payload.get('value'))
-        if ticket_id is None:
-            raise ValueError("Missing 'ticket_id' in event payload for NER update.")
-        mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {'summary': payload.get('value')})
+       
+        if not payload or not id:
+            raise ValueError("Missing payload or ticket_id in payload")
 
-class TagEventHandler(AbstractEventHandler):
-    def handle_event(self, event: Event):
-        data = event.to_dict()
-        payload = data.get("payload")
-        mongo.update_one(collection_name= 'tickets', query= {'id': payload.get('ticket_id')}, update_values= {'tags': payload.get('value')})
+        router = ModelRouterFactory.get_router(task)
+        result = router.route(mode, ticket_id, payload)
+        if mode == "async":
+            mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {task: payload.get('value')})
+        return result
 
 class DeleteEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
@@ -68,10 +86,10 @@ class EventProcessor:
     def __init__(self):
         self.handlers = {
             EventType.CREATE: InsertEventHandler,
-            EventType.NER: NerEventHandler,
+            EventType.NER: GenericAIEventHandler,
             EventType.DELETE: DeleteEventHandler,
-            EventType.SUMMARIZE: SumEventHandler,
-            EventType.TAG: TagEventHandler,
+            EventType.SUMMARIZE: GenericAIEventHandler,
+            EventType.TAG: GenericAIEventHandler,
         }
 
     def process_event(self, event: Event):

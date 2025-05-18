@@ -14,6 +14,8 @@ class Config:
     PORT = os.getenv("PORT")
     DLQ_TOPIC = os.getenv("DLQ_TOPIC")
     KAFKA_CONSUME_TOPIC = None
+    GATE_WAY = os.getenv("GATE_WAY")
+    API_KEY = os.getenv("API_KEY")
     @classmethod
     def get_kafka_topics(cls):
         topics_raw = os.getenv("KAFKA_CONSUME_TOPIC", "")

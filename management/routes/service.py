@@ -3,9 +3,9 @@ import os, uuid, shutil
 from models.service import Service
 from models.serviceInstance import ServiceInstance
 from models.database import SKELETON_PROCESSOR_PATH, ENV_PATH, db
-from utils.file import analyze_process_file, has_process_function
 from kafka_utils.producer import producer
 from kafka_utils.event import Event, EventType
+from routing.ai import route_round_robin
 
 service_bp = Blueprint("service", __name__)
 
@@ -49,6 +49,7 @@ def create_new_service():
                     }
                 )
                 producer.send_event(topic='dashboard', event = new_event)
+                producer.send_event(topic='models', event = new_event)
         
             return jsonify({
                 "status": "success"
@@ -151,4 +152,25 @@ def remove_instance():
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
+    
+@service_bp.route("/route/<name>", methods=["POST"])
+def routing(name):
+    session = db.create_session()
+    try:
+        with session.begin():
+            instance = route_round_robin(session, service_name=name)
+
+        return jsonify({
+            "id": instance.id,
+            "status": "success",
+            "host": instance.host,
+            "port": instance.port,
+            "endpoint": instance.endPoint,
+            "url": f"http://{instance.host}:{instance.port}/{instance.endPoint.lstrip('/')}"
+        })
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 

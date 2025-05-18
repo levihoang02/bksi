@@ -8,6 +8,7 @@ AUTH_HEADER = f"Bearer {GRAFANA_API_KEY}"
 def create_or_update_dashboard_on_grafana(dashboard_json: dict):
     url = f"http://{GRAFANA_URL}/api/dashboards/db"
     print(f"Grafana {url}")
+    print(AUTH_HEADER)
     headers = {
         "Authorization": AUTH_HEADER,
         "Content-Type": "application/json"

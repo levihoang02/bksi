@@ -104,10 +104,10 @@ class DeleteEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         print(f"Processing DELETE event: {event}")
         data = event.payload
+        print(data)
         
         try:
             targets = load_targets()
-            print(f"Current targets before deletion: {json.dumps(targets, indent=2)}")
             
             target_to_delete = f"{data['host']}:{data['port']}"
             job_name = data['name']
@@ -118,7 +118,7 @@ class DeleteEventHandler(AbstractEventHandler):
             for target in targets:
                 should_delete = False
             
-                if (target['labels']['name'] == job_name and 
+                if (target['labels']['job'] == job_name and
                     target_to_delete in target['targets']):
                     should_delete = True
                 
@@ -131,7 +131,6 @@ class DeleteEventHandler(AbstractEventHandler):
             
             if deleted:
                 save_targets(updated_targets)
-                print(f"Updated targets after deletion: {json.dumps(updated_targets, indent=2)}")
                 reload_prometheus()
             else:
                 print(f"No matching target found for deletion")
