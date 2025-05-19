@@ -10,7 +10,7 @@ const router = require('express').Router();
 // user routes
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);
-router.post('logout', userController.logout);
+router.post('/logout', userController.logout);
 
 router.get('/refresh', checkJwt, (req, res, next) => userController.refresh(req, res, next));
 router.get('/key', checkJwt, (req, res, next) => authController.generateAPIToken(req, res, next));
