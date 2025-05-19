@@ -76,8 +76,6 @@ def get_all_services():
                         "host": instance.host,
                         "port": instance.port,
                         "endPoint": instance.endPoint,
-                        "status": instance.status,
-                        "skeleton_path": instance.skeleton_path
                     }
                     for instance in instances
                 ]
@@ -108,7 +106,8 @@ def remove_service(name):
                         'id': instance.id,
                         'host': instance.host,
                         'port': instance.port,
-                        'name': service.Sname
+                        'name': service.Sname,
+                        'job': service.Sname,
                     }
                 )
                 producer.send_event(topic='dashboard', event = new_event)
@@ -130,6 +129,24 @@ def create_new_instance():
         port = data.get("port", [])
         endPoint = data.get("endPoint")
         zip_file_path= ""
+        metrics = [
+            "ai_request_total",
+            "ai_request_latency_seconds",
+            "model_inferences_total",
+            "model_inference_errors_total",
+            "model_response_time_seconds",
+            "model_batch_size",
+            "model_input_data_size_bytes",
+            "model_output_data_size_bytes",
+            "model_input_tokens_total",
+            "model_output_tokens_total",
+            "ai_model_accuracy",
+            "ai_model_loss",
+            "ai_memory_usage_bytes",
+            "ai_cpu_usage_percent",
+            "ai_gpu_memory_usage_bytes",
+            "ai_gpu_utilization_percent"
+        ]
         with session.begin():
             service = session.query(Service).filter_by(id= id).first()
             
@@ -143,7 +160,9 @@ def create_new_instance():
                         'host': host,
                         'port': port,
                         'id': new_instance.id,
-                        'name': service.Sname
+                        'name': service.Sname,
+                        'job': service.Sname,
+                        'metrics': metrics
                     }
                 )
             producer.send_event(topic='dashboard', event = new_event)
@@ -157,12 +176,16 @@ def create_new_instance():
         return jsonify({"error": str(e)}), 500
 
 @service_bp.route("/instance/<id>", methods=["DELETE"])
-def remove_instance():
-    session = db.create_session(id)
+def remove_instance(id):
+    session = db.create_session()
     try:
         with session.begin():
             instance= session.query(ServiceInstance).filter_by(id= id).first()
-            service= session.query(ServiceInstance).filter_by(id= instance.service_id).first()
+            if not instance:
+                return {"error": "Instance not found"}, 404
+            service= session.query(Service).filter_by(id= instance.service_id).first()
+            if not service:
+                return {"error": "Service not found"}, 404
             session.query(ServiceInstance).filter_by(id= id).delete(synchronize_session='fetch')
             
             new_event = Event(
@@ -172,7 +195,8 @@ def remove_instance():
                         'id': instance.id,
                         'host': instance.host,
                         'port': instance.port,
-                        'name': service.Sname
+                        'name': service.Sname,
+                        'job': service.Sname,
                     }
                 )
             producer.send_event(topic='dashboard', event = new_event)

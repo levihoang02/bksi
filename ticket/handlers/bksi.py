@@ -9,6 +9,8 @@ from router.factory import ModelRouterFactory
 
 config = Config()
 
+tasks = [e.value.lower() for e in EventType]
+
 class AbstractEventHandler(ABC):
     @abstractmethod
     def handle_event(self, event: Event):
@@ -18,21 +20,25 @@ class InsertEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
         new_data = event.to_dict()
         payload = new_data.get("payload")
+        mode = 'async'
         if(payload.get("created_by") == "customer"):
             raw_content = decode_html(payload.get("message"))
+            ticket_id = payload.get("id")
             new_payload = {
                 "ticket_id": payload.get("id"),
                 "content":  raw_content
             }
-            new_event = Event(
-                    source='management', 
-                    op=EventType.CREATE,
-                    payload= new_payload
-                )
+            # new_event = Event(
+            #         source='management', 
+            #         op=EventType.CREATE,
+            #         payload= new_payload
+            #     )
             ticket = Ticket(id= payload.get("id"), content= raw_content)
             data = ticket.to_dict()
             mongo.insert_one(collection_name= 'tickets', data=data)
-            producer.send_event('tickets', event= new_event)
+            for task in tasks:
+                router = ModelRouterFactory.get_router(task)
+                router.route(mode, ticket_id, new_payload)
             
 # class NerEventHandler(AbstractEventHandler):
 #     def handle_event(self, event: Event):
@@ -70,11 +76,11 @@ class GenericAIEventHandler(AbstractEventHandler):
         if not payload or not id:
             raise ValueError("Missing payload or ticket_id in payload")
 
-        router = ModelRouterFactory.get_router(task)
-        result = router.route(mode, ticket_id, payload)
+        # router = ModelRouterFactory.get_router(task)
+        # result = router.route(mode, ticket_id, payload)
         if mode == "async":
             mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {task: payload.get('value')})
-        return result
+        return
 
 class DeleteEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):

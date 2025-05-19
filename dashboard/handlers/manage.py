@@ -32,14 +32,14 @@ def reload_prometheus():
     except requests.exceptions.RequestException as e:
         print(f"Failed to reload Prometheus: {e}")
 
-def create_dashboard(metric_names: list[str], job_name: str):
+def create_dashboard(metric_names: list[str], job_name: str, target: str):
     try:
         print(f"Creating new dashboard for {job_name}...")
 
         metrics = metric_service.get_metric_types(metric_names= metric_names)
         # print(metrics)
 
-        dashboard_json = generate_dashboard_json_from_metrics(metrics= metrics, job_name= job_name)
+        dashboard_json = generate_dashboard_json_from_metrics(metrics= metrics, job_name= job_name, target=target)
         
         create_or_update_dashboard_on_grafana(dashboard_json)
         print(f"Created new dashboard for {job_name}")
@@ -71,7 +71,7 @@ class InsertEventHandler(AbstractEventHandler):
             print(f"Added new target: {target} for job: {data['job']}")
             
             reload_prometheus()
-            create_dashboard(metric_names= data["metrics"], job_name=data['job'])
+            create_dashboard(metric_names= data["metrics"], job_name=data['job'], target= target)
         except Exception as e:
             print(f"Error handling CREATE event: {e}")
 
