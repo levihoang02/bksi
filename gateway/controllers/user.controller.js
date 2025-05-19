@@ -71,10 +71,16 @@ const refresh = asyncErrorHandler(async (req, res) => {
 
         const { accessToken, refreshToken } = createTokens(admin);
 
-        res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 15 * 60 * 1000 })
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            maxAge: 15 * 60 * 1000,
+        })
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                sameSite: 'strict',
+                secure: true,
+                sameSite: 'none',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             })
             .status(200)
@@ -87,11 +93,13 @@ const refresh = asyncErrorHandler(async (req, res) => {
 const logout = asyncErrorHandler(async (req, res, next) => {
     res.clearCookie('accessToken', {
         httpOnly: true,
-        sameSite: 'strict',
+        secure: true,
+        sameSite: 'none',
         path: '/',
     }).clearCookie('refreshToken', {
         httpOnly: true,
-        sameSite: 'strict',
+        secure: true,
+        sameSite: 'none',
         path: '/',
     });
     res.status(200).json({ message: 'Logout successful. Please clear your token on client.' });
