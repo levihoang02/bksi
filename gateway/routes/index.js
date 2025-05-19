@@ -13,7 +13,9 @@ router.post('/login', userController.login);
 router.post('/logout', userController.logout);
 
 router.get('/refresh', checkJwt, (req, res, next) => userController.refresh(req, res, next));
-router.get('/key', checkJwt, (req, res, next) => authController.generateAPIToken(req, res, next));
+router.get('/key/:id', checkJwt, (req, res, next) => authController.generateAPIToken(req, res, next));
+router.get('/keys/:userId', checkJwt, (req, res, next) => authController.getAPIKeyByUser(req, res, next));
+router.delete('/key/:id', checkJwt, (req, res, next) => authController.deleteKeyById(req, res, next));
 
 // service route
 router.post('/service', checkJwt, serviceController.createNewServiceAPI);

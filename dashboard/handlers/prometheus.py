@@ -5,7 +5,7 @@ PROMETHEUS_UID = os.getenv("PROMETHEUS_UID")
 
 def generate_dashboard_json_from_metrics(metrics: list[dict], job_name: str) -> dict:
     dashboard_uid = str(uuid.uuid4())[:8]
-    dashboard_title = f"{job_name.capitalize()} Metrics Dashboard"
+    dashboard_title = f"{job_name.capitalize()} - {dashboard_uid} Metrics Dashboard"
 
     panels = []
     for i, metric in enumerate(metrics):

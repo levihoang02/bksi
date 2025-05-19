@@ -119,6 +119,7 @@ async function deleteInstanceFromRedis(endPoint, instanceId) {
 
 async function updateAllInstancesStatus() {
     return withRedisClient(async () => {
+        const client = getClient();
         const multi = client.multi();
 
         const allInstanceKeys = await client.keys('*:instances:*');

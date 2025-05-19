@@ -8,7 +8,7 @@
           {
             "id": "Dashboard1",
             "host": "dashboard",
-            "port": 8080
+            "port": 8081
           }
         ]},
         {"name":"Report",  "endPoint": "report", "instances": [

@@ -59,6 +59,36 @@ def create_new_service():
         session.close()
         return jsonify({"error": str(e)}), 500
     
+@service_bp.route("/services", methods=["GET"])
+def get_all_services():
+    session = db.create_session()
+    try:
+        services = session.query(Service).all()
+        result = []
+        for service in services:
+            instances = session.query(ServiceInstance).filter_by(service_id=service.id).all()
+            result.append({
+                "name": service.Sname,
+                "id": service.id,
+                "instances": [
+                    {
+                        "id": instance.id,
+                        "host": instance.host,
+                        "port": instance.port,
+                        "endPoint": instance.endPoint,
+                        "status": instance.status,
+                        "skeleton_path": instance.skeleton_path
+                    }
+                    for instance in instances
+                ]
+            })
+        return jsonify(result)
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+    
 @service_bp.route("/service/<name>", methods=["DELETE"])
 def remove_service(name):
     session = db.create_session()
