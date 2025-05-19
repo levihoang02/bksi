@@ -85,7 +85,15 @@ const refresh = asyncErrorHandler(async (req, res) => {
 });
 
 const logout = asyncErrorHandler(async (req, res, next) => {
-    res.clearCookie('accessToken').clearCookie('refreshToken');
+    res.clearCookie('accessToken', {
+        httpOnly: true,
+        sameSite: 'strict',
+        path: '/',
+    }).clearCookie('refreshToken', {
+        httpOnly: true,
+        sameSite: 'strict',
+        path: '/',
+    });
     res.status(200).json({ message: 'Logout successful. Please clear your token on client.' });
 });
 
