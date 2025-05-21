@@ -213,9 +213,11 @@ def routing(name):
     try:
         with session.begin():
             instance = route_round_robin(session, service_name=name)
+            service = session.query(Service).filter_by(id=instance.service_id).first()
 
         return jsonify({
             "id": instance.id,
+            "service_name": service.Sname if service else None,
             "status": "success",
             "host": instance.host,
             "port": instance.port,

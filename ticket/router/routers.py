@@ -27,7 +27,7 @@ class AbstractModelRouter(ABC):
         }
         return event
 
-    def route(self, mode, ticket_id, content) -> dict:
+    def route(self, mode, op, ticket_id, content) -> dict:
         payload = self.build_payload(ticket_id, content)
         if mode == "sync":
             route_url = f"{self.gateway_base}/{self.task}"
@@ -57,14 +57,14 @@ class AbstractModelRouter(ABC):
                 route_response = requests.post(route_url, timeout=5)
                 route_response.raise_for_status()
                 route_data = route_response.json()
-                topic = route_data.get("topic") or f"{self.task}-{route_data.get('id')}"
+                topic = route_data.get("topic") or f"{route_data.get('service_name')}-{route_data.get('id')}"
             except Exception as e:
                 raise RuntimeError(f"Failed to route for async mode: {str(e)}")
 
             try:
                 event = Event(
                     source="ticket",
-                    op=EventType[self.task.upper()],
+                    op=op,
                     payload=payload
                 )
                 producer.send_event(topic=topic, event=event)
@@ -87,3 +87,7 @@ class TagModelRouter(AbstractModelRouter):
 class SummaryModelRouter(AbstractModelRouter):
     def __init__(self):
         super().__init__(task_name="summarize")
+        
+class AISampleRouter(AbstractModelRouter):
+    def __init__(self):
+        super().__init__(task_name="ai-sample")

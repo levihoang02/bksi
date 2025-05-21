@@ -13,6 +13,71 @@ class FeedbackService:
     def save_feedback(self, feedback: Feedback):
         return self.collection.insert_one(feedback.to_dict())
 
+    def get_all_metrics(self, days=None):
+        if days is not None:
+            start_date = datetime.utcnow() - timedelta(days=days)
+        else:
+            start_date = datetime(1970, 1, 1)
+
+        # Match relevant documents only
+        match_stage = {
+            '$match': {
+                'timestamp': {'$gte': start_date},
+                'feedback_type': {'$ne': 'suggestion'}
+            }
+        }
+
+        # Group by service and feedback type
+        group_stage = {
+            '$group': {
+                '_id': {
+                    'service': '$service_name',
+                    'feedback_type': '$feedback_type'
+                },
+                'total': {'$sum': 1},
+                'positive': {
+                    '$sum': {'$cond': [{'$eq': ['$value', 1]}, 1, 0]}
+                },
+                'neutral': {
+                    '$sum': {'$cond': [{'$eq': ['$value', 0]}, 1, 0]}
+                },
+                'negative': {
+                    '$sum': {'$cond': [{'$eq': ['$value', -1]}, 1, 0]}
+                }
+            }
+        }
+
+        pipeline = [match_stage, group_stage]
+        results = list(self.collection.aggregate(pipeline))
+
+        metrics_by_service = {}
+
+        for result in results:
+            service = result['_id']['service']
+            feedback_type = result['_id']['feedback_type']
+
+            if service not in metrics_by_service:
+                metrics_by_service[service] = {
+                    'thumbs_up_total': 0,
+                    'neutral_total': 0,
+                    'thumbs_down_total': 0,
+                    'usage_total': 0,
+                    'rejection_total': 0,
+                    'total_feedback': 0
+                }
+
+            if feedback_type == 'rate':
+                metrics_by_service[service]['thumbs_up_total'] += result['positive']
+                metrics_by_service[service]['neutral_total'] += result['neutral']
+                metrics_by_service[service]['thumbs_down_total'] += result['negative']
+            elif feedback_type == 'usage':
+                metrics_by_service[service]['usage_total'] += result['positive']
+                metrics_by_service[service]['rejection_total'] += result['negative']
+
+            metrics_by_service[service]['total_feedback'] += result['total']
+
+        return metrics_by_service
+
     def get_metrics(self, service_name, days=None):
         if days is not None:
             start_date = datetime.utcnow() - timedelta(days=days)

@@ -38,7 +38,7 @@ class InsertEventHandler(AbstractEventHandler):
             mongo.insert_one(collection_name= 'tickets', data=data)
             for task in tasks:
                 router = ModelRouterFactory.get_router(task)
-                router.route(mode, ticket_id, new_payload)
+                router.route(mode, EventType.CREATE, ticket_id, new_payload)
             
 # class NerEventHandler(AbstractEventHandler):
 #     def handle_event(self, event: Event):
@@ -67,7 +67,7 @@ class InsertEventHandler(AbstractEventHandler):
         
 class GenericAIEventHandler(AbstractEventHandler):
     def handle_event(self, event: Event):
-        task = event.op.value.lower()
+        task = "ai-sample"
         mode = 'async'
         data = event.to_dict()
         payload = data.get("payload")
@@ -76,8 +76,8 @@ class GenericAIEventHandler(AbstractEventHandler):
         if not payload or not id:
             raise ValueError("Missing payload or ticket_id in payload")
 
-        # router = ModelRouterFactory.get_router(task)
-        # result = router.route(mode, ticket_id, payload)
+        router = ModelRouterFactory.get_router(task)
+        result = router.route(mode, EventType.CREATE, ticket_id, payload)
         if mode == "async":
             mongo.update_one(collection_name= 'tickets', query= {'id': ticket_id}, update_values= {task: payload.get('value')})
         return

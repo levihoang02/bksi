@@ -1,10 +1,11 @@
-from .routers import NerModelRouter, SummaryModelRouter, TagModelRouter
+from .routers import NerModelRouter, SummaryModelRouter, TagModelRouter, AISampleRouter
 
 class ModelRouterFactory:
     _router_map = {
         "ner": NerModelRouter,
         "tag": TagModelRouter,
         "summarize": SummaryModelRouter,
+        "ai-sample": AISampleRouter,
     }
 
     @staticmethod

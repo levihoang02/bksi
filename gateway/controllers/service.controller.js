@@ -189,7 +189,7 @@ const getAllServiceAPI = asyncErrorHandler(async (req, res, next) => {
             include: [
                 {
                     model: ServiceInstance,
-                    attributes: ['host', 'port'],
+                    attributes: ['id', 'host', 'port'],
                 },
             ],
         });

@@ -28,6 +28,15 @@ def get_metrics(service_name):
         return jsonify(metrics)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    
+@feedback_bp.route('/feedbacks', methods=['GET'])
+def get_all_service_metrics():
+    try:
+        days = request.args.get('days', default=None, type=int)
+        metrics = feedback_service.get_all_metrics(days=days)
+        return jsonify(metrics)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 @feedback_bp.route('/suggestions/<service_name>', methods=['GET'])
 def get_suggestions(service_name):
